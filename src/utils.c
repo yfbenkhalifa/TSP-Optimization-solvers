@@ -14,9 +14,8 @@ double euclidean_distance(double x1, double y1, double x2, double y2, bool round
     if (round) return (int) (sqrt(dx*dx + dy*dy) + 0.5);
     return sqrt(dx*dx + dy*dy);
 }
-void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
 
-    void read_input(instance *inst) // simplified CVRP parser, not all SECTIONs detected
+void read_input(instance *inst) // simplified CVRP parser, not all SECTIONs detected
 {
 
     FILE *fin = fopen(inst->input_file, "r");
@@ -134,6 +133,15 @@ void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
             break;
         }
 
+        if (strncmp(par_name, "BEST_KNOWN", 10) == 0)
+        {
+            token1 = strtok(NULL, " :");
+            inst->best_known_solution_value = atof(token1);
+            if (do_print) printf(" ... best known solution value %lf\n", inst->best_known_solution_value);
+            active_section = 0;
+            continue;
+        }
+
 
         if ( active_section == 1 ) // within NODE_COORD_SECTION
         {
@@ -175,4 +183,8 @@ void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
     fclose(fin);
 
 }
+
+void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
+
+
 

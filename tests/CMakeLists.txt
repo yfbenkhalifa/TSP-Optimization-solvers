@@ -4,6 +4,7 @@ project(or2_project_tests)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+get_filename_component(PARENT_DIR ../ ABSOLUTE)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -22,13 +23,17 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 enable_testing()
+include_directories(${PARENT_DIR}/src)
 
 add_executable(unit_tests
         UnitTests.cpp
+        TspTests.cpp
+
 )
 target_link_libraries(
         unit_tests
         GTest::gtest_main
+        or2_project_lib
 )
 
 include(GoogleTest)
