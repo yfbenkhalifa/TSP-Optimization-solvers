@@ -12,9 +12,8 @@
 #include <math.h>
 #include <cplex.h>
 #include <pthread.h>
-
 #include "utils.h"
 #endif //OR2_PROJECT_TSP_H
 
-void tsp_greedy(instance* inst, int starting_node, bool round, bool verbose);
-int nearest_node(instance* instance, int node, bool round);
+void tsp_greedy(instance* inst, int* solution, int starting_node, bool round, bool verbose, bool randomize);
+int nearest_node(instance* instance, int node, int* remaining_nodes, int * remaining_nodes_count, bool round);
