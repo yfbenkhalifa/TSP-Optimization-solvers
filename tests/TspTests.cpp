@@ -17,12 +17,13 @@ instance read_instance(){
 }
 
 TEST(TspTests, NearestNodeTest) {
-
 }
 
 TEST(TspTests,  GreedyHeuristicTest){
     instance inst = read_instance();
     int solution [inst.nnodes];
     tsp_greedy(&inst, solution, 0, true, false, true);
-    EXPECT_EQ(solution[0], 0);
+    double final_cost = compute_solution_cost(&inst, solution);
+    EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
+    EXPECT_EQ(has_duplicates(&inst, solution), false);
 }

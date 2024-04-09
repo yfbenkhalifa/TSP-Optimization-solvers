@@ -186,5 +186,18 @@ void read_input(instance *inst) // simplified CVRP parser, not all SECTIONs dete
 
 void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
 
+bool has_duplicates(instance* inst, int* solution){
+    if (inst->nnodes == -1) return false;
+
+    for (int i = 0; i < inst->nnodes - 1; i++) { // read comment by @nbro
+        for (int j = i + 1; j < inst->nnodes; j++) {
+            if (solution[i] == solution[j]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 

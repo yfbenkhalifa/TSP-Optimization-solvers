@@ -16,10 +16,10 @@
 #endif //OR2PROJECT_UTILS_H
 
 typedef struct{
-    int n;
-    int x[1000];
-    int y[1000];
-}gnuplot_instance;
+    int item1;
+    int item2;
+} pair;
+
 
 typedef struct {
 
@@ -74,5 +74,5 @@ double euclidean_distance(double x1, double y1, double x2, double y2, bool round
 void read_input(instance *inst);
 void parse_command_line(int argc, char** argv, instance *inst);
 void free_instance(instance *inst);
-gnuplot_instance instance_to_gnuplot(instance *inst);
+bool has_duplicates(instance *inst, int *solution);
 

@@ -16,4 +16,6 @@
 #endif //OR2_PROJECT_TSP_H
 
 void tsp_greedy(instance* inst, int* solution, int starting_node, bool round, bool verbose, bool randomize);
-int nearest_node(instance* instance, int node, int* remaining_nodes, int * remaining_nodes_count, bool round);
+void tsp_extra_mileage(instance* inst, int* solution, int starting_node, bool round, bool verbose, bool randomize);
+int euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int * remaining_nodes_count, bool round);
+double compute_solution_cost(instance* inst, const int* solution);
