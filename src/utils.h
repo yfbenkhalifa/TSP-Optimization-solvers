@@ -16,10 +16,21 @@
 #endif //OR2PROJECT_UTILS_H
 
 typedef struct{
-    int item1;
-    int item2;
-} pair;
+    double item1;
+    double item2;
+} tuple;
 
+typedef struct{
+    int node;
+    int node_index;
+    double cost;
+}solution;
+
+
+typedef struct{
+    int node1;
+    int node2;
+}pair;
 
 typedef struct {
 
@@ -56,6 +67,10 @@ typedef struct {
     double	best_lb;						// best lower bound available
     double *load_min;						// minimum load when leaving a node
     double *load_max;						// maximum load when leaving a node
+
+    //solution data
+    int* solution;
+    double best_cost_value;
 
     // model;
     int xstart;

@@ -3,88 +3,170 @@
 //
 
 #include "tsp.h"
+
 #define VERBOSE 50
 
 
-void tsp_greedy(instance* inst, int* solution, int starting_node, bool round, bool verbose, bool randomize){
-    int current_node_index = 0;
+void tsp_greedy(instance *inst, int starting_node) {
+    int current_node_index = starting_node;
     int remaining_nodes_count = inst->nnodes;
-    int remaining_nodes [inst->nnodes];
-    int nearest_node_index = -1;
+    solution nearest_node;
+    int *remaining_nodes = (int *) malloc(inst->nnodes * sizeof(int));
 
+
+    inst->solution = (int *) malloc(inst->nnodes * sizeof(int));
+    inst->best_cost_value = 0;
     // Initialize solution
-    for(int i = 0; i < inst->nnodes; i++){
-        solution[i] = -1;
+    for (int i = 0; i < inst->nnodes; i++) {
+        inst->solution[i] = -1;
         remaining_nodes[i] = i;
     }
 
-    if (randomize){
-        current_node_index = rand() % inst->nnodes;
-    }
+
     remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
 
-    for(int i=0; i<inst->nnodes-1; i++){
-        nearest_node_index = euclidean_nearest_node(inst,
-                                                    current_node_index,
-                                                    remaining_nodes,
-                                                    &remaining_nodes_count,
-                                                    round);
-        printf("%i -> %i \n", current_node_index, nearest_node_index);
-        solution[current_node_index] = nearest_node_index;
-        current_node_index = nearest_node_index;
+    for (int i = 0; i < inst->nnodes; i++) {
+        nearest_node = euclidean_nearest_node(inst,
+                                              current_node_index,
+                                              remaining_nodes,
+                                              &remaining_nodes_count);
+
+        if (nearest_node.node == -1) {
+            inst->solution[current_node_index] = starting_node;
+            inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
+                                                        inst->ycoord[current_node_index],
+                                                        inst->xcoord[starting_node],
+                                                        inst->ycoord[starting_node], false);
+            break;
+        }
+        inst->solution[current_node_index] = nearest_node.node;
+        inst->best_cost_value += nearest_node.cost;
+        current_node_index = nearest_node.node;
     }
 }
 
-void tsp_extra_mileage(instance* inst, int* solution, pair starting_pair, bool round, bool verbose, bool randomize){
-
-    if (randomize){
-        starting_pair.item1 = rand() % inst->nnodes;
-        starting_pair.item2 = rand() % inst->nnodes;
-    }
-
+void tsp_extra_mileage(instance *inst, pair starting_pair) {
+    heuristic_state state;
     pair current_pair = starting_pair;
 
-    int remaining_nodes_count = inst->nnodes;
-    int remaining_nodes [inst->nnodes];
+    initialize_instance(inst, &state);
 
+    inst->solution[current_pair.node1] = current_pair.node2;
+    inst->solution[current_pair.node2] = current_pair.node1;
+    state.covered_nodes[state.covered_nodes_count++] = current_pair.node1;
+    state.covered_nodes[state.covered_nodes_count++] = current_pair.node2;
+    state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
+    state.uncovered_nodes[current_pair.node2] = state.uncovered_nodes[--state.uncovered_nodes_count];
 
-    // Initialize solution
-    for(int i = 0; i < inst->nnodes; i++){
-        solution[i] = -1;
-        remaining_nodes[i] = i;
-    }
-    solution[current_pair.item1] = current_pair.item2;
-    solution[current_pair.item2] = current_pair.item1;
-    remaining_nodes[current_pair.item1] = remaining_nodes[--remaining_nodes_count];
-    remaining_nodes[current_pair.item2] = remaining_nodes[--remaining_nodes_count];
+    while (state.covered_nodes_count < inst->nnodes) {
+        solution best_node;
+        for (int i = 0; i < state.covered_nodes_count; i++) {
+            int current_node = state.covered_nodes[i];
+            int current_node_opposite = inst->solution[current_node];
+            double min_distance_delta = INFINITY;
+            best_node.node = -1;
+            best_node.node_index = -1;
+            for (int j = 0; j < state.uncovered_nodes_count; j++) {
 
-    for(int i=0; i<remaining_nodes_count; i++){
-        current_distance
+                double distance1 = euclidean_distance(inst->xcoord[current_node],
+                                                      inst->ycoord[current_node],
+                                                      inst->xcoord[state.uncovered_nodes[j]],
+                                                      inst->ycoord[state.uncovered_nodes[j]], false);
+                double distance2 = euclidean_distance(inst->xcoord[state.uncovered_nodes[j]],
+                                                      inst->ycoord[state.uncovered_nodes[j]],
+                                                      inst->xcoord[current_node_opposite],
+                                                      inst->ycoord[current_node_opposite], false);
+                double existing_pair_distance = euclidean_distance(inst->xcoord[current_node],
+                                                                   inst->ycoord[current_node],
+                                                                   inst->xcoord[current_node_opposite],
+                                                                   inst->ycoord[current_node_opposite], false);
+
+                double distance_delta = distance1 + distance2 - existing_pair_distance;
+
+                if (distance_delta < min_distance_delta) {
+                    min_distance_delta = distance_delta;
+                    best_node.node = state.uncovered_nodes[j];
+                    best_node.node_index = j;
+                    best_node.cost = distance_delta;
+                }
+            }
+            if (best_node.node > -1) {
+                inst->solution[current_node] = best_node.node;
+                inst->solution[best_node.node] = current_node_opposite;
+                state.covered_nodes[state.covered_nodes_count++] = best_node.node;
+                state.uncovered_nodes[best_node.node_index] = state.uncovered_nodes[--state.uncovered_nodes_count];
+            }
+        }
     }
 }
 
 
-int euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count, bool round){
-    double min_distance = 0;
-    int nearest_node = -1;
-    int nearest_node_index = -1;
-    for(int j = 0; j < *remaining_nodes_count; j++){
-        if(node == remaining_nodes[j]) continue;
-        double distance = euclidean_distance(instance->xcoord[node], instance->ycoord[node], instance->xcoord[remaining_nodes[j]], instance->ycoord[remaining_nodes[j]], round);
-        if (nearest_node == -1 || distance < min_distance){
-            min_distance = distance;
-            nearest_node = remaining_nodes[j];
-            nearest_node_index = j;
+void initialize_instance(instance* inst, heuristic_state *state) {
+    state->covered_nodes_count = 0;
+    state->uncovered_nodes_count = inst->nnodes;
+    inst->solution = (int *) malloc(inst->nnodes * sizeof(int));
+    state->covered_nodes = (int *) malloc(inst->nnodes * sizeof(int));
+    state->uncovered_nodes = (int *) malloc(inst->nnodes * sizeof(int));
+    for (int i = 0; i < inst->nnodes; ++i) {
+        inst->solution[i] = -1;
+        state->covered_nodes[i] = i;
+        state->uncovered_nodes[i] = i;
+    }
+}
+
+
+pair euclidean_most_distant_pair(instance *inst) {
+    double max_distance = 0;
+    pair most_distant_pair;
+    most_distant_pair.node1 = -1;
+    most_distant_pair.node2 = -1;
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        for (int j = 0; j < inst->nnodes; j++) {
+            if (i == j) continue;
+            double distance = euclidean_distance(inst->xcoord[i],
+                                                 inst->ycoord[i],
+                                                 inst->xcoord[j],
+                                                 inst->ycoord[j],
+                                                 false);
+            if (distance > max_distance) {
+                max_distance = distance;
+                most_distant_pair.node1 = i;
+                most_distant_pair.node2 = j;
+            }
         }
     }
-    if (nearest_node == -1) return -1;
-    remaining_nodes[nearest_node_index] = remaining_nodes[--*remaining_nodes_count];
+    return most_distant_pair;
+}
+
+
+solution euclidean_nearest_node(instance *instance, int node, int *remaining_nodes, int *remaining_nodes_count) {
+    double min_distance = INFINITY;
+    solution nearest_node;
+    nearest_node.node = -1;
+    nearest_node.node_index = -1;
+    nearest_node.cost = min_distance;
+
+
+    for (int j = 0; j < *remaining_nodes_count; j++) {
+        if (node == remaining_nodes[j]) continue;
+        double distance = euclidean_distance(instance->xcoord[node], instance->ycoord[node],
+                                             instance->xcoord[remaining_nodes[j]], instance->ycoord[remaining_nodes[j]],
+                                             false);
+        if (distance < min_distance) {
+            min_distance = distance;
+            nearest_node.node = remaining_nodes[j];
+            nearest_node.node_index = j;
+        }
+    }
+    nearest_node.cost = min_distance;
+    remaining_nodes[nearest_node.node_index] = remaining_nodes[--*remaining_nodes_count];
     return nearest_node;
 }
 
-double compute_solution_cost(instance* inst, const int* solution){
+double compute_solution_cost(instance *inst, const int *solution) {
     double cost = 0;
-    for(int i = 0; i < inst->nnodes; i++){
+    for (int i = 0; i < inst->nnodes; i++) {
         if (solution[i] == -1) continue;
         cost += euclidean_distance(inst->xcoord[i],
                                    inst->ycoord[i],

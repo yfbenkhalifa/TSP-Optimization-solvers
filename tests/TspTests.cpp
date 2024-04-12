@@ -22,7 +22,23 @@ TEST(TspTests, NearestNodeTest) {
 TEST(TspTests,  GreedyHeuristicTest){
     instance inst = read_instance();
     int solution [inst.nnodes];
-    tsp_greedy(&inst, solution, 0, true, false, true);
+    tsp_greedy(&inst, 0);
+    for (int i = 0; i < inst.nnodes; i++) {
+        solution[i] = inst.solution[i];
+    }
+    double final_cost = compute_solution_cost(&inst, solution);
+    EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
+    EXPECT_EQ(has_duplicates(&inst, solution), false);
+}
+
+TEST(TspTests, ExtraMileageTest){
+    instance inst = read_instance();
+    int solution [inst.nnodes];
+    pair starting_pair = euclidean_most_distant_pair(&inst);
+    tsp_extra_mileage(&inst, starting_pair);
+    for (int i = 0; i < inst.nnodes; i++) {
+        solution[i] = inst.solution[i];
+    }
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(has_duplicates(&inst, solution), false);
