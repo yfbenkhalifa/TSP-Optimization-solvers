@@ -6,7 +6,57 @@
 
 #define VERBOSE 50
 
+instance generate_instance(int nnodes, double *demand, double *xcoord, double *ycoord, int depot, double capacity, int nveh) {
+    instance inst;
+    inst.nnodes = nnodes;
+    inst.demand = (double *) malloc(nnodes * sizeof(double));
+    inst.xcoord = (double *) malloc(nnodes * sizeof(double));
+    inst.ycoord = (double *) malloc(nnodes * sizeof(double));
+    inst.solution = (int *) malloc(nnodes * sizeof(int));
 
+    for (int i = 0; i < nnodes; i++) {
+        inst.demand[i] = demand[i];
+        inst.xcoord[i] = xcoord[i];
+        inst.ycoord[i] = ycoord[i];
+        inst.solution[i] = -1; // Initialize solution to -1
+    }
+
+    inst.depot = depot;
+    inst.capacity = capacity;
+    inst.nveh = nveh;
+
+    // Initialize other fields to default values
+    inst.best_cost_value = 0;
+    inst.best_known_solution_value = 0;
+    inst.model_type = 0;
+    inst.old_benders = 0;
+    inst.randomseed = 0;
+    inst.num_threads = 1;
+    inst.timelimit = 0;
+    strcpy(inst.input_file, "generated_instance");
+    strcpy(inst.node_file, "");
+    inst.available_memory = 0;
+    inst.max_nodes = -1;
+    inst.cutoff = 0;
+    inst.integer_costs = 0;
+    inst.tstart = 0;
+    inst.zbest = 0;
+    inst.tbest = 0;
+    inst.best_sol = NULL;
+    inst.best_lb = 0;
+    inst.load_min = NULL;
+    inst.load_max = NULL;
+    inst.xstart = 0;
+    inst.qstart = 0;
+    inst.bigqstart = 0;
+    inst.sstart = 0;
+    inst.bigsstart = 0;
+    inst.ystart = 0;
+    inst.fstart = 0;
+    inst.zstart = 0;
+
+    return inst;
+}
 
 double euclidean_distance(double x1, double y1, double x2, double y2, bool round){
     double dx = x1 - x2;
@@ -189,7 +239,7 @@ void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
 bool has_duplicates(instance* inst, int* solution){
     if (inst->nnodes == -1) return false;
 
-    for (int i = 0; i < inst->nnodes - 1; i++) { // read comment by @nbro
+    for (int i = 0; i < inst->nnodes - 1; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
             if (solution[i] == solution[j]) {
                 return true;

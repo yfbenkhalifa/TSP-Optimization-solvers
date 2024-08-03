@@ -28,6 +28,7 @@ typedef struct{
 
 
 typedef struct{
+    // node1 -> node2
     int node1;
     int node2;
 }pair;
@@ -90,4 +91,5 @@ void read_input(instance *inst);
 void parse_command_line(int argc, char** argv, instance *inst);
 void free_instance(instance *inst);
 bool has_duplicates(instance *inst, int *solution);
+instance generate_instance(int nnodes, double *demand, double *xcoord, double *ycoord, int depot, double capacity, int nveh);
 

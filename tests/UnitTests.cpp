@@ -7,6 +7,19 @@
 
 #define ROOTDIR "../../"
 
+TEST(UnitTests, GenerateInstanceTest) {
+    int nnodes = 48;
+    double demand[48] = {0.0};
+    double xcoord[48] = {0.0};
+    double ycoord[48] = {0.0};
+    int depot = 0;
+    double capacity = 0.0;
+    int nveh = 0;
+    instance inst = generate_instance(nnodes, demand, xcoord, ycoord, depot, capacity, nveh);
+    EXPECT_EQ(inst.nnodes, 48);
+    EXPECT_EQ(inst.best_known_solution_value, 0.0);
+}
+
 // Demonstrate some basic assertions.
 TEST(UnitTests, ReadInputTest) {
     std::string file = ROOTDIR"data/att48.tsp";

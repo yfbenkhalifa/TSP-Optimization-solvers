@@ -6,18 +6,149 @@
 
 #define VERBOSE 50
 
+void two_opt_swap(instance* instance, pair p1, pair p2)
+{
+    // Assume: (p1.node1 -> p1.node2) and (p2.node1 -> p2.node2) is directed as such
+    int a1 = p1.node1;
+    int a2 = p1.node2;
+    int b1 = p2.node1;
+    int b2 = p2.node2;
 
-void tsp_greedy(instance *inst, int starting_node) {
+    instance->solution[a1] = b1;
+    instance->solution[a2] = b2;
+}
+
+void undo_two_opt_swap(instance* instance, pair p1, pair p2)
+{
+    // Assume: (p1.node1 -> p1.node2) and (p2.node1 -> p2.node2) is directed as such
+    int a1 = p1.node1;
+    int a2 = p1.node2;
+    int b1 = p2.node1;
+    int b2 = p2.node2;
+
+    instance->solution[a1] = b2;
+    instance->solution[b1] = a2;
+}
+
+
+void reverse_path(instance* instance, int start_node, int end_node)
+{
+    int currentNode = start_node;
+
+    int current_solution = instance->solution[currentNode];
+    int next_node = instance->solution[current_solution];
+    while (currentNode != end_node)
+    {
+        next_node = instance->solution[current_solution];
+        instance->solution[current_solution] = currentNode;
+        currentNode = current_solution;
+        current_solution = next_node;
+    }
+}
+
+void reverse_path2(instance* instance, int start_node, int end_node)
+{
+    int* path = (int*)malloc(instance->nnodes * sizeof(int));
+    int path_length = 0;
+    int current_node = start_node;
+
+    // Collect the path from start_node to end_node
+    while (current_node != end_node) {
+        path[path_length++] = current_node;
+        current_node = instance->solution[current_node];
+    }
+    path[path_length++] = end_node;
+
+    // Reverse the path
+    for (int i = 0; i < path_length / 2; ++i) {
+        int temp = path[i];
+        path[i] = path[path_length - 1 - i];
+        path[path_length - 1 - i] = temp;
+    }
+
+    // Update the solution with the reversed path
+    for (int i = 0; i < path_length - 1; ++i) {
+        instance->solution[path[i]] = path[i + 1];
+    }
+
+    free(path);
+}
+
+double tsp_two_opt(instance* instance)
+{
+    double deltaCost = 0;
+    int min_a1 = -1;
+    int min_a2 = -1;
+    int min_b1 = -1;
+    int min_b2 = -1;
+    // cycle through all pairs of edges
+    for (int i = 0; i < instance->nnodes; i++)
+    {
+        for (int j = 0; j < instance->nnodes; j++)
+        {
+            if (i == j) continue;
+            int a1 = i;
+            int a2 = instance->solution[i];
+            int b1 = j;
+            int b2 = instance->solution[j];
+
+            double cost_a1_a2 = euclidean_distance(instance->xcoord[a1],
+                                              instance->ycoord[a1],
+                                              instance->xcoord[a2],
+                                              instance->ycoord[a2], false);
+
+            double cost_b1_b2 = euclidean_distance(instance->xcoord[b1],
+                                              instance->ycoord[b1],
+                                              instance->xcoord[b2],
+                                              instance->ycoord[b2], false);
+
+            double cost_a1_b1 = euclidean_distance(instance->xcoord[a1],
+                                                 instance->ycoord[a1],
+                                                 instance->xcoord[b1],
+                                                 instance->ycoord[b1], false);
+
+            double cost_a2_b2 = euclidean_distance(instance->xcoord[a2],
+                                                 instance->ycoord[a2],
+                                                 instance->xcoord[b2],
+                                                 instance->ycoord[b2], false);
+
+            double currentDeltaCost = (cost_a1_b1 + cost_a2_b2) - (cost_a1_a2 + cost_b1_b2);
+            if (currentDeltaCost < deltaCost)
+            {
+                deltaCost = currentDeltaCost;
+                min_a1 = a1;
+                min_a2 = a2;
+                min_b1 = b1;
+                min_b2 = b2;
+            }
+        }
+    }
+
+    if (deltaCost < 0)
+    {
+        int starting_reverse_node = instance->solution[min_a2];
+        instance->solution[min_a1] = min_b1;
+        instance->solution[min_a2] = min_b2;
+        reverse_path(instance, starting_reverse_node, min_b1);
+
+    }
+
+    return deltaCost;
+}
+
+void tsp_greedy(instance* inst, int starting_node)
+{
     int current_node_index = starting_node;
     int remaining_nodes_count = inst->nnodes;
     solution nearest_node;
-    int *remaining_nodes = (int *) malloc(inst->nnodes * sizeof(int));
+    int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
 
 
-    inst->solution = (int *) malloc(inst->nnodes * sizeof(int));
+    inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
     inst->best_cost_value = 0;
     // Initialize solution
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         inst->solution[i] = -1;
         remaining_nodes[i] = i;
     }
@@ -25,19 +156,21 @@ void tsp_greedy(instance *inst, int starting_node) {
 
     remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
 
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         nearest_node = euclidean_nearest_node(inst,
                                               current_node_index,
                                               remaining_nodes,
                                               &remaining_nodes_count);
 
-        if (nearest_node.node == -1) {
+        if (nearest_node.node == -1)
+        {
             inst->solution[current_node_index] = starting_node;
             inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
                                                         inst->ycoord[current_node_index],
                                                         inst->xcoord[starting_node],
                                                         inst->ycoord[starting_node], false);
-            break;
+            continue;
         }
         inst->solution[current_node_index] = nearest_node.node;
         inst->best_cost_value += nearest_node.cost;
@@ -45,7 +178,8 @@ void tsp_greedy(instance *inst, int starting_node) {
     }
 }
 
-void tsp_extra_mileage(instance *inst, pair starting_pair) {
+void tsp_extra_mileage(instance* inst, pair starting_pair)
+{
     heuristic_state state;
     pair current_pair = starting_pair;
 
@@ -58,16 +192,18 @@ void tsp_extra_mileage(instance *inst, pair starting_pair) {
     state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
     state.uncovered_nodes[current_pair.node2] = state.uncovered_nodes[--state.uncovered_nodes_count];
 
-    while (state.covered_nodes_count < inst->nnodes) {
+    while (state.covered_nodes_count < inst->nnodes)
+    {
         solution best_node;
-        for (int i = 0; i < state.covered_nodes_count; i++) {
+        for (int i = 0; i < state.covered_nodes_count; i++)
+        {
             int current_node = state.covered_nodes[i];
             int current_node_opposite = inst->solution[current_node];
             double min_distance_delta = INFINITY;
             best_node.node = -1;
             best_node.node_index = -1;
-            for (int j = 0; j < state.uncovered_nodes_count; j++) {
-
+            for (int j = 0; j < state.uncovered_nodes_count; j++)
+            {
                 double distance1 = euclidean_distance(inst->xcoord[current_node],
                                                       inst->ycoord[current_node],
                                                       inst->xcoord[state.uncovered_nodes[j]],
@@ -83,14 +219,16 @@ void tsp_extra_mileage(instance *inst, pair starting_pair) {
 
                 double distance_delta = distance1 + distance2 - existing_pair_distance;
 
-                if (distance_delta < min_distance_delta) {
+                if (distance_delta < min_distance_delta)
+                {
                     min_distance_delta = distance_delta;
                     best_node.node = state.uncovered_nodes[j];
                     best_node.node_index = j;
                     best_node.cost = distance_delta;
                 }
             }
-            if (best_node.node > -1) {
+            if (best_node.node > -1)
+            {
                 inst->solution[current_node] = best_node.node;
                 inst->solution[best_node.node] = current_node_opposite;
                 state.covered_nodes[state.covered_nodes_count++] = best_node.node;
@@ -101,13 +239,15 @@ void tsp_extra_mileage(instance *inst, pair starting_pair) {
 }
 
 
-void initialize_instance(instance* inst, heuristic_state *state) {
+void initialize_instance(instance* inst, heuristic_state* state)
+{
     state->covered_nodes_count = 0;
     state->uncovered_nodes_count = inst->nnodes;
-    inst->solution = (int *) malloc(inst->nnodes * sizeof(int));
-    state->covered_nodes = (int *) malloc(inst->nnodes * sizeof(int));
-    state->uncovered_nodes = (int *) malloc(inst->nnodes * sizeof(int));
-    for (int i = 0; i < inst->nnodes; ++i) {
+    inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
+    state->covered_nodes = (int*)malloc(inst->nnodes * sizeof(int));
+    state->uncovered_nodes = (int*)malloc(inst->nnodes * sizeof(int));
+    for (int i = 0; i < inst->nnodes; ++i)
+    {
         inst->solution[i] = -1;
         state->covered_nodes[i] = i;
         state->uncovered_nodes[i] = i;
@@ -115,21 +255,25 @@ void initialize_instance(instance* inst, heuristic_state *state) {
 }
 
 
-pair euclidean_most_distant_pair(instance *inst) {
+pair euclidean_most_distant_pair(instance* inst)
+{
     double max_distance = 0;
     pair most_distant_pair;
     most_distant_pair.node1 = -1;
     most_distant_pair.node2 = -1;
 
-    for (int i = 0; i < inst->nnodes; i++) {
-        for (int j = 0; j < inst->nnodes; j++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
+        for (int j = 0; j < inst->nnodes; j++)
+        {
             if (i == j) continue;
             double distance = euclidean_distance(inst->xcoord[i],
                                                  inst->ycoord[i],
                                                  inst->xcoord[j],
                                                  inst->ycoord[j],
                                                  false);
-            if (distance > max_distance) {
+            if (distance > max_distance)
+            {
                 max_distance = distance;
                 most_distant_pair.node1 = i;
                 most_distant_pair.node2 = j;
@@ -140,7 +284,8 @@ pair euclidean_most_distant_pair(instance *inst) {
 }
 
 
-solution euclidean_nearest_node(instance *instance, int node, int *remaining_nodes, int *remaining_nodes_count) {
+solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count)
+{
     double min_distance = INFINITY;
     solution nearest_node;
     nearest_node.node = -1;
@@ -148,12 +293,14 @@ solution euclidean_nearest_node(instance *instance, int node, int *remaining_nod
     nearest_node.cost = min_distance;
 
 
-    for (int j = 0; j < *remaining_nodes_count; j++) {
+    for (int j = 0; j < *remaining_nodes_count; j++)
+    {
         if (node == remaining_nodes[j]) continue;
         double distance = euclidean_distance(instance->xcoord[node], instance->ycoord[node],
                                              instance->xcoord[remaining_nodes[j]], instance->ycoord[remaining_nodes[j]],
                                              false);
-        if (distance < min_distance) {
+        if (distance < min_distance)
+        {
             min_distance = distance;
             nearest_node.node = remaining_nodes[j];
             nearest_node.node_index = j;
@@ -164,9 +311,11 @@ solution euclidean_nearest_node(instance *instance, int node, int *remaining_nod
     return nearest_node;
 }
 
-double compute_solution_cost(instance *inst, const int *solution) {
+double compute_solution_cost(instance* inst, const int* solution)
+{
     double cost = 0;
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         if (solution[i] == -1) continue;
         cost += euclidean_distance(inst->xcoord[i],
                                    inst->ycoord[i],
@@ -174,4 +323,18 @@ double compute_solution_cost(instance *inst, const int *solution) {
                                    inst->ycoord[solution[i]], false);
     }
     return cost;
+}
+
+double compute_geometric_mean(instance testBed[], int testBedSolutions[])
+{
+    double product = 1.0;
+    int num_instances = sizeof(testBed) / sizeof(instance);
+
+    for (int i = 0; i < num_instances; i++)
+    {
+        double cost = testBedSolutions[i];
+        product *= cost;
+    }
+
+    return pow(product, 1.0 / num_instances);
 }
