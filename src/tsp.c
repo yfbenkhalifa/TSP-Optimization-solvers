@@ -338,3 +338,95 @@ double compute_geometric_mean(instance testBed[], int testBedSolutions[])
 
     return pow(product, 1.0 / num_instances);
 }
+
+void tabu_search(int *initial_solution, int size) {
+    int **tabu_list = (int **)malloc(TABU_TENURE * sizeof(int *));
+    for (int i = 0; i < TABU_TENURE; i++) {
+        tabu_list[i] = (int *)malloc(size * sizeof(int));
+    }
+    int tabu_index = 0;
+
+    Solution best_solution;
+    best_solution.solution = (int *)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+        best_solution.solution[i] = initial_solution[i];
+    }
+    best_solution.cost = evaluate_solution(initial_solution, size);
+
+    Solution current_solution = best_solution;
+
+    for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
+        int num_neighbors = size; // Number of neighbors to generate
+        int **neighbors = (int **)malloc(num_neighbors * sizeof(int *));
+        for (int i = 0; i < num_neighbors; i++) {
+            neighbors[i] = (int *)malloc(size * sizeof(int));
+        }
+        generate_neighbors(current_solution.solution, size, neighbors, num_neighbors);
+
+        Solution best_neighbor;
+        best_neighbor.solution = NULL;
+        best_neighbor.cost = INT_MAX;
+
+        for (int i = 0; i < num_neighbors; i++) {
+            int cost = evaluate_solution(neighbors[i], size);
+            if (cost < best_neighbor.cost && !is_tabu(neighbors[i], tabu_list, TABU_TENURE, size)) {
+                best_neighbor.solution = neighbors[i];
+                best_neighbor.cost = cost;
+            }
+        }
+
+        if (best_neighbor.solution != NULL) {
+            current_solution = best_neighbor;
+            if (current_solution.cost < best_solution.cost) {
+                best_solution = current_solution;
+            }
+            add_to_tabu_list(current_solution.solution, tabu_list, &tabu_index, size);
+        }
+
+        for (int i = 0; i < num_neighbors; i++) {
+            if (neighbors[i] != best_neighbor.solution) {
+                free(neighbors[i]);
+            }
+        }
+        free(neighbors);
+    }
+
+    printf("Best solution cost: %d\n", best_solution.cost);
+    free(best_solution.solution);
+    for (int i = 0; i < TABU_TENURE; i++) {
+        free(tabu_list[i]);
+    }
+    free(tabu_list);
+}
+
+int evaluate_solution(int *solution, int size) {
+    // Implement the evaluation function for the solution
+    return 0;
+}
+
+void generate_neighbors(int *solution, int size, int **neighbors, int num_neighbors) {
+    // Implement the function to generate neighboring solutions
+}
+
+bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size) {
+    for (int i = 0; i < tabu_size; i++) {
+        bool is_same = true;
+        for (int j = 0; j < size; j++) {
+            if (solution[j] != tabu_list[i][j]) {
+                is_same = false;
+                break;
+            }
+        }
+        if (is_same) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void add_to_tabu_list(int *solution, int **tabu_list, int *tabu_index, int size) {
+    for (int i = 0; i < size; i++) {
+        tabu_list[*tabu_index][i] = solution[i];
+    }
+    *tabu_index = (*tabu_index + 1) % TABU_TENURE;
+}

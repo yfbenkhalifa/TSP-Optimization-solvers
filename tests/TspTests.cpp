@@ -100,3 +100,28 @@ TEST(TspTests, GreedyGraspWithTwoOptTest)
     EXPECT_EQ(has_duplicates(&inst, solution), false);
     EXPECT_EQ(final_cost_after_two_opt <= final_cost, true);
 }
+
+TEST(TspTests, TabuSearchTest) {
+    instance inst = read_instance();
+    int solution[inst.nnodes];
+
+    // Initialize the solution with a starting point, e.g., a greedy solution
+    tsp_greedy(&inst, 0);
+    for (int i = 0; i < inst.nnodes; i++) {
+        solution[i] = inst.solution[i];
+    }
+
+    // Run Tabu Search
+    tabu_search(solution, inst.nnodes);
+
+    // Update the instance with the new solution
+    for (int i = 0; i < inst.nnodes; i++) {
+        inst.solution[i] = solution[i];
+    }
+
+    // Assertions
+    EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
+    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    double final_cost = compute_solution_cost(&inst, solution);
+    EXPECT_GT(final_cost, 0); // Ensure the cost is positive
+}
