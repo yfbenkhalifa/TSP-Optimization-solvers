@@ -37,75 +37,19 @@ bool is_neighbor(int *solution1, int *solution2, int size) {
 void two_opt_swap(int *solution, int size, Edge e1, Edge e2)
 {
     int *solution_copy = (int *)malloc(sizeof(int) * size);
-
-
-    int a1 = e1.node1;
-    int a2 = e1.node2;
-    int b1 = e2.node1;
-    int b2 = e2.node2;
-    solution[a1] = b1;
-    int i = a2;
+    solution[e1.node1] = e2.node1;
+    int i = e1.node2;
     int temp = -1;
-    int next = -1;
-    for (int j = 0; j < size; j++) {
-        solution_copy[j] = solution[j];
-    }
-    while(i != b1)
+    memcpy(solution_copy, solution, size * sizeof(int));
+    while(i != e2.node1)
     {
         temp = solution[i];
         solution_copy[temp] = i;
         i = temp;
     }
-    for (int j = 0; j < size; j++) {
-        solution[j] = solution_copy[j];
-    }
-    solution[a2] = b2;
+    memcpy(solution, solution_copy, size * sizeof(int));
+    solution[e1.node2] = e2.node2;
 
-}
-
-
-
-void reverse_path(instance* instance, int start_node, int end_node)
-{
-    int currentNode = start_node;
-
-    int current_solution = instance->solution[currentNode];
-    int next_node = instance->solution[current_solution];
-    while (currentNode != end_node)
-    {
-        next_node = instance->solution[current_solution];
-        instance->solution[current_solution] = currentNode;
-        currentNode = current_solution;
-        current_solution = next_node;
-    }
-}
-
-void reverse_path2(instance* instance, int start_node, int end_node)
-{
-    int* path = (int*)malloc(instance->nnodes * sizeof(int));
-    int path_length = 0;
-    int current_node = start_node;
-
-    // Collect the path from start_node to end_node
-    while (current_node != end_node) {
-        path[path_length++] = current_node;
-        current_node = instance->solution[current_node];
-    }
-    path[path_length++] = end_node;
-
-    // Reverse the path
-    for (int i = 0; i < path_length / 2; ++i) {
-        int temp = path[i];
-        path[i] = path[path_length - 1 - i];
-        path[path_length - 1 - i] = temp;
-    }
-
-    // Update the solution with the reversed path
-    for (int i = 0; i < path_length - 1; ++i) {
-        instance->solution[path[i]] = path[i + 1];
-    }
-
-    free(path);
 }
 
 double tsp_two_opt(instance* instance)
