@@ -17,24 +17,29 @@ instance read_instance()
     return inst;
 }
 
-TEST(TspTests, NearestNodeTest)
-{
-
+TEST(TspTests, RandomSolutionTest) {
+    instance inst = read_instance();
+    int solution[inst.nnodes];
+    random_solution(&inst, solution);
+    EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
 }
-
 
 TEST(TspTests, GreedyHeuristicTest)
 {
     instance inst = read_instance();
     int solution[inst.nnodes];
+    init_solution(&inst, solution);
     tsp_greedy(&inst, 0);
+
     for (int i = 0; i < inst.nnodes; i++)
     {
         solution[i] = inst.solution[i];
     }
+
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
 
 }
 
@@ -42,6 +47,7 @@ TEST(TspTests, ExtraMileageTest)
 {
     instance inst = read_instance();
     int solution[inst.nnodes];
+    init_solution(&inst, solution);
     pair starting_pair = euclidean_most_distant_pair(&inst);
     tsp_extra_mileage(&inst, starting_pair);
     for (int i = 0; i < inst.nnodes; i++)
@@ -50,13 +56,28 @@ TEST(TspTests, ExtraMileageTest)
     }
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
+}
+
+TEST(TspTests, TwoOptMoveTest) {
+    instance inst = read_instance();
+    int solution[inst.nnodes];
+    random_solution(&inst, solution);
+    Edge e1, e2;
+    e1.node1 = 0;
+    e1.node2 = solution[0];
+    e2.node1 = 1;
+    e2.node2 = solution[1];
+    two_opt_swap(solution, inst.nnodes, e1, e2);
+    EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
 }
 
 TEST(TspTests, ExtraMileageWithTwoOptTest)
 {
     instance inst = read_instance();
     int solution[inst.nnodes];
+    init_solution(&inst, solution);
     pair starting_pair = euclidean_most_distant_pair(&inst);
     tsp_extra_mileage(&inst, starting_pair);
     for (int i = 0; i < inst.nnodes; i++)
@@ -72,7 +93,7 @@ TEST(TspTests, ExtraMileageWithTwoOptTest)
         solution[i] = inst.solution[i];
     }
     double final_cost_after_two_opt = compute_solution_cost(&inst, solution);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     EXPECT_EQ(final_cost_after_two_opt <= final_cost, true);
 }
 
@@ -88,7 +109,7 @@ TEST(TspTests, GreedyGraspWithTwoOptTest)
     }
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     double deltaCost = -1;
 
     deltaCost = tsp_two_opt(&inst);
@@ -97,7 +118,7 @@ TEST(TspTests, GreedyGraspWithTwoOptTest)
         solution[i] = inst.solution[i];
     }
     double final_cost_after_two_opt = compute_solution_cost(&inst, solution);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     EXPECT_EQ(final_cost_after_two_opt <= final_cost, true);
 }
 
@@ -121,7 +142,7 @@ TEST(TspTests, TabuSearchTest) {
 
     // Assertions
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
-    EXPECT_EQ(has_duplicates(&inst, solution), false);
+    EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_GT(final_cost, 0); // Ensure the cost is positive
 }

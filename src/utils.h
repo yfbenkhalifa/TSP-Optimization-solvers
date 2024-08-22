@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <cplex.h>
+#include <stdbool.h>
 #include <pthread.h>
 #endif //OR2PROJECT_UTILS_H
 

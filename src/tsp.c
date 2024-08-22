@@ -6,29 +6,63 @@
 
 #define VERBOSE 50
 
-void two_opt_swap(instance* instance, pair p1, pair p2)
+bool is_tsp_solution(instance* inst, int* solution)
 {
-    // Assume: (p1.node1 -> p1.node2) and (p2.node1 -> p2.node2) is directed as such
-    int a1 = p1.node1;
-    int a2 = p1.node2;
-    int b1 = p2.node1;
-    int b2 = p2.node2;
-
-    instance->solution[a1] = b1;
-    instance->solution[a2] = b2;
+    for (int i = 0; i < inst->nnodes; i++)
+    {
+        if (solution[i] == -1) return false;
+    }
+    if (has_duplicates(inst, solution)) return false;
+    return true;
 }
 
-void undo_two_opt_swap(instance* instance, pair p1, pair p2)
+void init_solution(instance* inst, int* solution)
 {
-    // Assume: (p1.node1 -> p1.node2) and (p2.node1 -> p2.node2) is directed as such
-    int a1 = p1.node1;
-    int a2 = p1.node2;
-    int b1 = p2.node1;
-    int b2 = p2.node2;
-
-    instance->solution[a1] = b2;
-    instance->solution[b1] = a2;
+    for (int i = 0; i < inst->nnodes; i++)
+    {
+        solution[i] = -1;
+    }
 }
+
+bool is_neighbor(int *solution1, int *solution2, int size) {
+    int differing_edges = 0;
+    for (int i = 0; i < size; i++) {
+        if (solution1[i] != solution2[i]) {
+            differing_edges++;
+        }
+    }
+    return differing_edges == 2;
+}
+
+void two_opt_swap(int *solution, int size, Edge e1, Edge e2)
+{
+    int *solution_copy = (int *)malloc(sizeof(int) * size);
+
+
+    int a1 = e1.node1;
+    int a2 = e1.node2;
+    int b1 = e2.node1;
+    int b2 = e2.node2;
+    solution[a1] = b1;
+    int i = a2;
+    int temp = -1;
+    int next = -1;
+    for (int j = 0; j < size; j++) {
+        solution_copy[j] = solution[j];
+    }
+    while(i != b1)
+    {
+        temp = solution[i];
+        solution_copy[temp] = i;
+        i = temp;
+    }
+    for (int j = 0; j < size; j++) {
+        solution[j] = solution_copy[j];
+    }
+    solution[a2] = b2;
+
+}
+
 
 
 void reverse_path(instance* instance, int start_node, int end_node)
@@ -177,6 +211,24 @@ void tsp_greedy(instance* inst, int starting_node)
         current_node_index = nearest_node.node;
     }
 }
+
+void random_solution(instance *inst, int *solution) {
+    int *remaining_nodes = (int *)malloc(inst->nnodes * sizeof(int));
+    for (int i = 0; i < inst->nnodes; i++) {
+        remaining_nodes[i] = i;
+    }
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        int random_index = rand() % inst->nnodes;
+        while (remaining_nodes[random_index] == -1) {
+            random_index = rand() % inst->nnodes;
+        }
+        solution[i] = remaining_nodes[random_index];
+        remaining_nodes[random_index] = -1;
+    }
+    free(remaining_nodes);
+}
+
 
 void tsp_extra_mileage(instance* inst, pair starting_pair)
 {
@@ -405,7 +457,7 @@ int evaluate_solution(int *solution, int size) {
 }
 
 void generate_neighbors(int *solution, int size, int **neighbors, int num_neighbors) {
-    // Implement the function to generate neighboring solutions
+    int *temp = (int *)malloc(size * sizeof(int));
 }
 
 bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size) {
