@@ -160,11 +160,12 @@ double tsp_two_opt(instance* instance)
 
     if (deltaCost < 0)
     {
-        int starting_reverse_node = instance->solution[min_a2];
-        instance->solution[min_a1] = min_b1;
-        instance->solution[min_a2] = min_b2;
-        reverse_path(instance, starting_reverse_node, min_b1);
-
+        Edge e1, e2;
+        e1.node1 = min_a1;
+        e1.node2 = min_a2;
+        e2.node1 = min_b1;
+        e2.node2 = min_b2;
+        two_opt_swap(instance->solution, instance->nnodes, e1, e2);
     }
 
     return deltaCost;
