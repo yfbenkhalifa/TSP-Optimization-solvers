@@ -31,12 +31,7 @@ TEST(TspTests, GreedyHeuristicTest)
     int solution[inst.nnodes];
     init_solution(&inst, solution);
     tsp_greedy(&inst, 0);
-
-    for (int i = 0; i < inst.nnodes; i++)
-    {
-        solution[i] = inst.solution[i];
-    }
-
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
@@ -80,46 +75,48 @@ TEST(TspTests, ExtraMileageWithTwoOptTest)
     init_solution(&inst, solution);
     pair starting_pair = euclidean_most_distant_pair(&inst);
     tsp_extra_mileage(&inst, starting_pair);
-    for (int i = 0; i < inst.nnodes; i++)
-    {
-        solution[i] = inst.solution[i];
-    }
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(has_duplicates(&inst, solution), false);
-    tsp_two_opt(&inst);
-    for (int i = 0; i < inst.nnodes; i++)
-    {
-        solution[i] = inst.solution[i];
-    }
+    double delta = tsp_two_opt(&inst);
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost_after_two_opt = compute_solution_cost(&inst, solution);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     EXPECT_EQ(final_cost_after_two_opt <= final_cost, true);
+    EXPECT_LE(delta, 0);
 }
 
 TEST(TspTests, GreedyGraspWithTwoOptTest)
 {
     instance inst = read_instance();
     int solution[inst.nnodes];
-    pair starting_pair = euclidean_most_distant_pair(&inst);
     tsp_greedy(&inst, 0);
-    for (int i = 0; i < inst.nnodes; i++)
-    {
-        solution[i] = inst.solution[i];
-    }
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
-    double deltaCost = -1;
-
-    deltaCost = tsp_two_opt(&inst);
-    for (int i = 0; i < inst.nnodes; i++)
-    {
-        solution[i] = inst.solution[i];
-    }
+    double deltaCost = tsp_two_opt(&inst);
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost_after_two_opt = compute_solution_cost(&inst, solution);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     EXPECT_EQ(final_cost_after_two_opt <= final_cost, true);
+    EXPECT_LE(deltaCost, 0);
+}
+
+TEST(TspTests, GenerateNeighboursTest)
+{
+    instance inst = read_instance();
+    int solution[inst.nnodes];
+    random_solution(&inst, solution);
+
+    int num_neighbors = 2;
+    int **neighbors = (int **)malloc(2 * sizeof(int *));
+    generate_neighbors(solution, inst.nnodes, neighbors, num_neighbors);
+    for (int i = 0; i < num_neighbors; i++)
+    {
+        EXPECT_EQ(is_neighbor(solution, neighbors[i], inst.nnodes), true);
+    }
 }
 
 TEST(TspTests, TabuSearchTest) {
@@ -128,17 +125,13 @@ TEST(TspTests, TabuSearchTest) {
 
     // Initialize the solution with a starting point, e.g., a greedy solution
     tsp_greedy(&inst, 0);
-    for (int i = 0; i < inst.nnodes; i++) {
-        solution[i] = inst.solution[i];
-    }
+    memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
 
     // Run Tabu Search
     tabu_search(solution, inst.nnodes);
 
     // Update the instance with the new solution
-    for (int i = 0; i < inst.nnodes; i++) {
-        inst.solution[i] = solution[i];
-    }
+    memcpy(inst.solution, solution, inst.nnodes * sizeof(int));
 
     // Assertions
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);

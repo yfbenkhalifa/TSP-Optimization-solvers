@@ -48,7 +48,7 @@ double tsp_two_opt(instance* inst);
 void two_opt_swap(int *solution, int size, Edge e1, Edge e2);
 void initialize_instance(instance* inst, heuristic_state* state);
 int evaluate_solution(int *solution, int size);
-void generate_neighbors(int *solution, int size, int **neighbors, int num_neighbors);
+void generate_neighbors(int *solution, int size, int **neighbours, int num_neighbors);
 bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size);
 void add_to_tabu_list(int *solution, int **tabu_list, int *tabu_index, int size);
 void random_solution(instance *inst, int *solution);

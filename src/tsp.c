@@ -345,9 +345,7 @@ void tabu_search(int *initial_solution, int size) {
 
     Solution best_solution;
     best_solution.solution = (int *)malloc(size * sizeof(int));
-    for (int i = 0; i < size; i++) {
-        best_solution.solution[i] = initial_solution[i];
-    }
+    memcpy(best_solution.solution, initial_solution, size * sizeof(int));
     best_solution.cost = evaluate_solution(initial_solution, size);
 
     Solution current_solution = best_solution;
@@ -402,7 +400,21 @@ int evaluate_solution(int *solution, int size) {
 }
 
 void generate_neighbors(int *solution, int size, int **neighbors, int num_neighbors) {
-    int *temp = (int *)malloc(size * sizeof(int));
+    for (int i = 0; i < num_neighbors; i++) {
+        neighbors[i] = (int *)malloc(size * sizeof(int));
+        memcpy(neighbors[i], solution, size * sizeof(int));
+        int index1 = rand() % size;
+        int index2 = rand() % size;
+        while (index1 == index2) {
+            index2 = rand() % size;
+        }
+        Edge e1, e2;
+        e1.node1 = index1;
+        e1.node2 = solution[index1];
+        e2.node1 = index2;
+        e2.node2 = solution[index2];
+        two_opt_swap(neighbors[i], size, e1, e2);
+    }
 }
 
 bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size) {
