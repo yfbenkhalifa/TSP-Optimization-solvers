@@ -72,3 +72,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 /cmake-build-debug/
+/cmake-build-debbug-docker/
+/cmake-build-debug/
+/cmake-build-debug-docker/
+/cmake-build-debug-wsl/
