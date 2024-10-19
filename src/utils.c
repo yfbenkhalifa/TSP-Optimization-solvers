@@ -58,6 +58,16 @@ instance generate_instance(int nnodes, double *demand, double *xcoord, double *y
     return inst;
 }
 
+bool compare_solutions(int *solution1, int *solution2, int size) {
+    for (int i = 0; i < size; i++) {
+        if (solution1[i] != solution2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 double euclidean_distance(double x1, double y1, double x2, double y2, bool round){
     double dx = x1 - x2;
     double dy = y1 - y2;
@@ -238,16 +248,41 @@ void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
 
 bool has_duplicates(instance* inst, int* solution){
     if (inst->nnodes == -1) return false;
+    int *hash_set = (int *)calloc(inst->nnodes, sizeof(int));
+    if (hash_set == NULL) {
+        return false; // Memory allocation failed
+    }
 
-    for (int i = 0; i < inst->nnodes - 1; i++) {
-        for (int j = i + 1; j < inst->nnodes; j++) {
-            if (solution[i] == solution[j]) {
-                return true;
+    for (int i = 0; i < inst->nnodes; i++) {
+        int value = solution[i];
+        if (hash_set[value] == 1) {
+            free(hash_set);
+            return true; // Duplicate found
+        }
+        hash_set[value] = 1;
+    }
+
+    free(hash_set);
+    return false;
+}
+
+bool is_acyclic(instance *inst, int *solution) {
+    if (inst->nnodes == -1) return false;
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        if(solution[i] == i) return false;
+    }
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        for (int j = 0; j < inst->nnodes; j++) {
+            if (i == solution[j] && j == solution[i]) {
+                return false;
             }
         }
     }
-    return false;
+    return true;
 }
+
 
 
 

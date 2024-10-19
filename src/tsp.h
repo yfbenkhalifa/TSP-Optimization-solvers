@@ -52,3 +52,4 @@ void generate_neighbors(int *solution, int size, int **neighbours, int num_neigh
 bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size);
 void add_to_tabu_list(int *solution, int **tabu_list, int *tabu_index, int size);
 void random_solution(instance *inst, int *solution);
+bool is_2opt_neighbour(int *solution1, int *solution2, int size);

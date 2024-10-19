@@ -8,7 +8,7 @@
 
 instance read_instance()
 {
-    std::string file = ROOTDIR"data/att48.tsp";
+    std::string file = ROOTDIR"data/tsp_mock.tsp";
     // Read input from file
     instance inst;
     strcpy(inst.input_file, "NULL");
@@ -115,8 +115,19 @@ TEST(TspTests, GenerateNeighboursTest)
     generate_neighbors(solution, inst.nnodes, neighbors, num_neighbors);
     for (int i = 0; i < num_neighbors; i++)
     {
-        EXPECT_EQ(is_neighbor(solution, neighbors[i], inst.nnodes), true);
+        EXPECT_EQ(is_2opt_neighbour(solution, neighbors[i], inst.nnodes), true);
     }
+}
+
+TEST(TspTests, Is2OptNeighbour) {
+    instance inst = read_instance();
+    int solution[inst.nnodes];
+    random_solution(&inst, solution);
+    int neighbor[inst.nnodes];
+    two_opt_swap(neighbor, inst.nnodes, (Edge){0, solution[0]}, (Edge){2, solution[2]});
+    EXPECT_EQ(is_2opt_neighbour(solution, neighbor, inst.nnodes), true);
+    two_opt_swap(neighbor, inst.nnodes, (Edge){0, solution[0]}, (Edge){2, solution[2]});
+    EXPECT_EQ(is_2opt_neighbour(solution, neighbor, inst.nnodes), false);
 }
 
 TEST(TspTests, TabuSearchTest) {

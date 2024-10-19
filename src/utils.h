@@ -92,5 +92,7 @@ void read_input(instance *inst);
 void parse_command_line(int argc, char** argv, instance *inst);
 void free_instance(instance *inst);
 bool has_duplicates(instance *inst, int *solution);
+bool is_acyclic(instance *inst, int *solution);
 instance generate_instance(int nnodes, double *demand, double *xcoord, double *ycoord, int depot, double capacity, int nveh);
+bool compare_solutions(int* solution1, int* solution2, int size);
 

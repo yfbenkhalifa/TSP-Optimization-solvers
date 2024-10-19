@@ -13,6 +13,7 @@ bool is_tsp_solution(instance* inst, int* solution)
         if (solution[i] == -1) return false;
     }
     if (has_duplicates(inst, solution)) return false;
+    if (!is_acyclic(inst, solution)) return false;
     return true;
 }
 
@@ -158,20 +159,47 @@ void tsp_greedy(instance* inst, int starting_node)
 }
 
 void random_solution(instance *inst, int *solution) {
-    int *remaining_nodes = (int *)malloc(inst->nnodes * sizeof(int));
+    // Initialize the solution with node indices
     for (int i = 0; i < inst->nnodes; i++) {
-        remaining_nodes[i] = i;
+        solution[i] = i;
     }
 
-    for (int i = 0; i < inst->nnodes; i++) {
-        int random_index = rand() % inst->nnodes;
-        while (remaining_nodes[random_index] == -1) {
-            random_index = rand() % inst->nnodes;
-        }
-        solution[i] = remaining_nodes[random_index];
-        remaining_nodes[random_index] = -1;
+    // Shuffle the solution array to create a random solution
+    srand(time(NULL));
+    for (int i = inst->nnodes - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = solution[i];
+        solution[i] = solution[j];
+        solution[j] = temp;
     }
-    free(remaining_nodes);
+
+    // Ensure the solution is a valid TSP solution
+    if (!is_tsp_solution(inst, solution)) {
+        random_solution(inst, solution); // Retry if the solution is not valid
+    }
+}
+
+bool is_2opt_neighbour(int *solution1, int *solution2, int size) {
+    int differing_edges = 0;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            Edge e1, e2;
+            e1.node1 = i;
+            e1.node2 = solution1[i];
+            e2.node1 = j;
+            e2.node2 = solution1[j];
+
+            int *solution2_modified = (int *)malloc(size * sizeof(int));
+            memcpy(solution2_modified, solution1, size * sizeof(int));
+            two_opt_swap(solution2_modified, size, e1, e2);
+
+            if (compare_solutions(solution2_modified, solution2, size)) {
+                differing_edges+=2;
+            }
+            free(solution2_modified);
+        }
+    }
+    return differing_edges == 2;
 }
 
 
