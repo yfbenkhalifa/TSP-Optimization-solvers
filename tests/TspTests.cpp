@@ -20,6 +20,7 @@ instance read_instance()
 TEST(TspTests, RandomSolutionTest) {
     instance inst = read_instance();
     int solution[inst.nnodes];
+    init_solution(&inst, solution);
     random_solution(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
