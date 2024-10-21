@@ -28,6 +28,8 @@ add_executable(or2_project src/main.c
         src/utils.c
         src/tsp.c
         ${HEADER_FILES}
+        src/genetic.h
+        src/genetic.h
 
 )
 

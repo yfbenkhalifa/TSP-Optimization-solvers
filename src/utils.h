@@ -35,7 +35,6 @@ typedef struct{
 }pair;
 
 typedef struct {
-
     // metadata
     double best_known_solution_value;
 

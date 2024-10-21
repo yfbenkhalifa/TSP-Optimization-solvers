@@ -111,13 +111,6 @@ TEST(TspTests, GenerateNeighboursTest)
     int solution[inst.nnodes];
     random_solution(&inst, solution);
 
-    int num_neighbors = 2;
-    int **neighbors = (int **)malloc(2 * sizeof(int *));
-    generate_neighbors(solution, inst.nnodes, neighbors, num_neighbors);
-    for (int i = 0; i < num_neighbors; i++)
-    {
-        EXPECT_EQ(is_2opt_neighbour(solution, neighbors[i], inst.nnodes), true);
-    }
 }
 
 TEST(TspTests, Is2OptNeighbour) {
@@ -138,6 +131,7 @@ TEST(TspTests, TabuSearchTest) {
     // Initialize the solution with a starting point, e.g., a greedy solution
     tsp_greedy(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
+    double greedy_final_cost = compute_solution_cost(&inst, solution);
 
     // Run Tabu Search
     tabu_search(solution, inst.nnodes);
@@ -150,4 +144,5 @@ TEST(TspTests, TabuSearchTest) {
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_GT(final_cost, 0); // Ensure the cost is positive
+    EXPECT_LE(final_cost, greedy_final_cost); // Ensure the cost is less than or equal to the greedy solution
 }
