@@ -4,6 +4,7 @@
 
 #include "tsp.h"
 
+
 #define VERBOSE 50
 
 bool is_tsp_solution(instance* inst, int* solution)
@@ -25,7 +26,7 @@ void init_solution(instance* inst, int* solution)
     }
 }
 
-bool is_neighbor(int *solution1, int *solution2, int size) {
+bool is_neighbor(const int *solution1, const int *solution2, int size) {
     int differing_edges = 0;
     for (int i = 0; i < size; i++) {
         if (solution1[i] != solution2[i]) {
@@ -201,6 +202,8 @@ bool is_2opt_neighbour(int *solution1, int *solution2, int size) {
     }
     return differing_edges == 2;
 }
+
+
 
 
 void tsp_extra_mileage(instance* inst, pair starting_pair)

@@ -26,6 +26,8 @@ TEST(TspTests, RandomSolutionTest) {
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
 }
 
+
+
 TEST(TspTests, GreedyHeuristicTest)
 {
     instance inst = read_instance();

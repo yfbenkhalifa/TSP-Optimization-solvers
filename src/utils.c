@@ -3,7 +3,6 @@
 //
 
 #include "utils.h"
-
 #define VERBOSE 50
 
 instance generate_instance(int nnodes, double *demand, double *xcoord, double *ycoord, int depot, double capacity, int nveh) {
@@ -58,7 +57,7 @@ instance generate_instance(int nnodes, double *demand, double *xcoord, double *y
     return inst;
 }
 
-bool compare_solutions(int *solution1, int *solution2, int size) {
+bool compare_solutions(const int *solution1, const int *solution2, int size) {
     for (int i = 0; i < size; i++) {
         if (solution1[i] != solution2[i]) {
             return false;
@@ -67,7 +66,6 @@ bool compare_solutions(int *solution1, int *solution2, int size) {
     return true;
 }
 
-
 double euclidean_distance(double x1, double y1, double x2, double y2, bool round){
     double dx = x1 - x2;
     double dy = y1 - y2;
@@ -75,7 +73,8 @@ double euclidean_distance(double x1, double y1, double x2, double y2, bool round
     return sqrt(dx*dx + dy*dy);
 }
 
-void read_input(instance *inst) // simplified CVRP parser, not all SECTIONs detected
+
+void read_input(instance *inst)
 {
 
     FILE *fin = fopen(inst->input_file, "r");
@@ -244,9 +243,7 @@ void read_input(instance *inst) // simplified CVRP parser, not all SECTIONs dete
 
 }
 
-void print_error(const char *err) { printf("\n\n ERROR: %s \n\n", err);}
-
-bool has_duplicates(instance* inst, int* solution){
+bool has_duplicates(instance* inst, const int* solution){
     if (inst->nnodes == -1) return false;
     int *hash_set = (int *)calloc(inst->nnodes, sizeof(int));
     if (hash_set == NULL) {
@@ -266,7 +263,7 @@ bool has_duplicates(instance* inst, int* solution){
     return false;
 }
 
-bool is_acyclic(instance *inst, int *solution) {
+bool is_acyclic(instance *inst, const int *solution) {
     if (inst->nnodes == -1) return false;
 
     for (int i = 0; i < inst->nnodes; i++) {
