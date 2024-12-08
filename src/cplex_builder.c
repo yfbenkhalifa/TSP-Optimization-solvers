@@ -12,10 +12,10 @@ double dist(int i, int j, instance *inst) {
     return dis + 0.0;
 }
 
-int xpos(int i, int j, instance *inst) // to be verified
+int get_cplex_variable_index(int i, int j, instance *inst) // to be verified
 {
     if (i == j) print_error(" i == j in xpos");
-    if (i > j) return xpos(j, i, inst);
+    if (i > j) return get_cplex_variable_index(j, i, inst);
     int pos = i * inst->nnodes + j - ((i + 1) * (i + 2)) / 2;
     return pos;
 }
@@ -40,7 +40,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
             if (CPXnewcols(env, lp, 1, &cost_function_value, &lower_bound, &upper_bound, &binary, cname)) {
                 print_error(" wrong CPXnewcols on x var.s");
             }
-            if (CPXgetnumcols(env, lp) - 1 != xpos(i, j, inst)) {
+            if (CPXgetnumcols(env, lp) - 1 != get_cplex_variable_index(i, j, inst)) {
                 print_error(" wrong position for x var.s");
             }
         }
@@ -57,7 +57,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
         int non_zero_variables_count = 0;
         for (int i = 0; i < inst->nnodes; i++) {
             if (i == h) continue;
-            index[non_zero_variables_count] = xpos(i, h, inst);
+            index[non_zero_variables_count] = get_cplex_variable_index(i, h, inst);
             value[non_zero_variables_count] = 1.0;
             non_zero_variables_count++;
         }
@@ -109,7 +109,7 @@ int TSPopt(instance *inst) {
 
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
-            if (xstar[xpos(i, j, inst)] > 0.5) {
+            if (xstar[get_cplex_variable_index(i, j, inst)] > 0.5) {
                 printf("  ... x(%3d,%3d) = 1\n", i + 1, j + 1);
                 inst->solution[i] = j;
             }
@@ -132,10 +132,36 @@ void find_connected_components(int *solution, int *component_map, int nnodes) {
     }
 
     for (int i = 0; i < nnodes; i++) {
-        for (int j = 0; j < nnodes; j++) {
-            if (solution[i] == j) {
-                component_map[j] = component_map[i];
+        int connected_node = solution[i];
+        component_map[connected_node] = component_map[i];
+    }
+}
+
+void add_bender_constraint(const int *component_map, instance *instance, CPXENVptr env, CPXLPptr lp, int ncomponents) {
+    if (ncomponents == 1) return;
+
+    double right_hand_side_value = 1.0;
+
+    for (int k = 0; k < ncomponents; k++) {
+        int *index = (int *) calloc(instance->nnodes, sizeof(int));
+        double *coefficients = (double *) calloc(instance->nnodes, sizeof(double));
+        int non_zero_variables_count = 0;
+        char constraint_sense = 'L';
+        for (int i = 0; i < instance->nnodes; i++) {
+            if (component_map[i] != k) continue;
+            right_hand_side_value++; // increase cardinality of the set
+            for (int j = i + 1; j < instance->nnodes; j++) {
+                if (component_map[j] != k) continue;
+                index[non_zero_variables_count] = get_cplex_variable_index(i, j, instance);
+                coefficients[non_zero_variables_count] = 1.0;
+                non_zero_variables_count++;
             }
         }
+        if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense, NULL, index,
+                       coefficients, NULL, NULL)) {
+            print_error("CPXaddrows(): error 1");
+        }
+        free(index);
+        free(coefficients);
     }
 }
