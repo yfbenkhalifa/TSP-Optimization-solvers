@@ -5,7 +5,6 @@ project(or2_project_tests)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 get_filename_component(PARENT_DIR ../ ABSOLUTE)
-
 include(FetchContent)
 FetchContent_Declare(
         googletest

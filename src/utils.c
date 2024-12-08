@@ -5,6 +5,20 @@
 #include "utils.h"
 #define VERBOSE 50
 
+void export_solution(const char *filename, instance *inst) {
+    FILE *fout = fopen(filename, "w");
+    if (fout == NULL) {
+        print_error(" output file not found!");
+    }
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        fprintf(fout, "%d-%d\n", i, inst->solution[i]);
+    }
+
+    fclose(fout);
+}
+
+
 instance generate_instance(int nnodes, double *demand, double *xcoord, double *ycoord, int depot, double capacity, int nveh) {
     instance inst;
     inst.nnodes = nnodes;

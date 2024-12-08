@@ -1,7 +1,7 @@
-NAME : att48
-COMMENT : 48 capitals of the US (Padberg/Rinaldi)
+NAME : tsp_mock
+COMMENT : 10 random mock nodes
 TYPE : TSP
-BEST_KNOWN : 5000
+BEST_KNOWN : ?
 DIMENSION : 10
 EDGE_WEIGHT_TYPE : ATT
 NODE_COORD_SECTION

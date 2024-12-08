@@ -12,9 +12,7 @@ double dist(int i, int j, instance *inst) {
     return dis + 0.0;
 }
 
-/***************************************************************************************************************************/
 int xpos(int i, int j, instance *inst) // to be verified
-/***************************************************************************************************************************/
 {
     if (i == j) print_error(" i == j in xpos");
     if (i > j) return xpos(j, i, inst);
@@ -22,11 +20,9 @@ int xpos(int i, int j, instance *inst) // to be verified
     return pos;
 }
 
-int VERBOSE = 50;
+int VERBOSE = 10000;
 
-void build_model(instance *inst, CPXENVptr env, CPXLPptr lp)
-/**************************************************************************************************************************/
-{
+void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
     double zero = 0.0;
     char binary = 'B';
 
@@ -38,15 +34,17 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp)
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
             sprintf(cname[0], "x(%d,%d)", i + 1, j + 1); // ... x(1,2), x(1,3) ....
-            double obj = dist(i, j, inst); // cost == distance
-            double lb = 0.0;
-            double ub = 1.0;
-            if (CPXnewcols(env, lp, 1, &obj, &lb, &ub, &binary, cname)) print_error(" wrong CPXnewcols on x var.s");
-            if (CPXgetnumcols(env, lp) - 1 != xpos(i, j, inst)) print_error(" wrong position for x var.s");
+            double cost_function_value = dist(i, j, inst); // cost == distance
+            double lower_bound = 0.0;
+            double upper_bound = 1.0;
+            if (CPXnewcols(env, lp, 1, &cost_function_value, &lower_bound, &upper_bound, &binary, cname)) {
+                print_error(" wrong CPXnewcols on x var.s");
+            }
+            if (CPXgetnumcols(env, lp) - 1 != xpos(i, j, inst)) {
+                print_error(" wrong position for x var.s");
+            }
         }
     }
-
-    // add the degree constraints
 
     int *index = (int *) calloc(inst->nnodes, sizeof(int));
     double *value = (double *) calloc(inst->nnodes, sizeof(double));
@@ -56,16 +54,17 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp)
         double rhs = 2.0;
         char sense = 'E'; // 'E' for equality constraint
         sprintf(cname[0], "degree(%d)", h + 1);
-        int nnz = 0;
+        int non_zero_variables_count = 0;
         for (int i = 0; i < inst->nnodes; i++) {
             if (i == h) continue;
-            index[nnz] = xpos(i, h, inst);
-            value[nnz] = 1.0;
-            nnz++;
+            index[non_zero_variables_count] = xpos(i, h, inst);
+            value[non_zero_variables_count] = 1.0;
+            non_zero_variables_count++;
         }
         int izero = 0;
-        if (CPXaddrows(env, lp, 0, 1, nnz, &rhs, &sense, &izero, index, value, NULL, &cname[0])) print_error(
-            "CPXaddrows(): error 1");
+        if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &rhs, &sense, &izero, index, value, NULL, &cname[0])) {
+            print_error("CPXaddrows(): error 1");
+        }
     }
 
     free(value);
@@ -77,9 +76,7 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp)
     if (VERBOSE >= 100) CPXwriteprob(env, lp, "model.lp", NULL);
 }
 
-int TSPopt(instance *inst)
-/**************************************************************************************************************************/
-{
+int TSPopt(instance *inst) {
     // open CPLEX model
     int error;
     CPXENVptr env = CPXopenCPLEX(&error);
@@ -103,13 +100,19 @@ int TSPopt(instance *inst)
     }
 
     // use the optimal solution found by CPLEX
-
+    inst->solution = (int *) calloc(inst->nnodes, sizeof(int));
     int ncols = CPXgetnumcols(env, lp);
     double *xstar = (double *) calloc(ncols, sizeof(double));
-    if (CPXgetx(env, lp, xstar, 0, ncols - 1)) print_error("CPXgetx() error");
+    int cpxgetx_error = CPXgetx(env, lp, xstar, 0, ncols - 1);
+
+    if (cpxgetx_error > 0) print_error("CPXgetx() error");
+
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
-            if (xstar[xpos(i, j, inst)] > 0.5) printf("  ... x(%3d,%3d) = 1\n", i + 1, j + 1);
+            if (xstar[xpos(i, j, inst)] > 0.5) {
+                printf("  ... x(%3d,%3d) = 1\n", i + 1, j + 1);
+                inst->solution[i] = j;
+            }
         }
     }
     free(xstar);
@@ -119,4 +122,20 @@ int TSPopt(instance *inst)
     CPXcloseCPLEX(&env);
 
     return 0; // or an appropriate nonzero error code
+}
+
+void find_connected_components(int *solution, int *component_map, int nnodes) {
+    component_map = (int *) calloc(nnodes, sizeof(int));
+
+    for (int i = 0; i < nnodes; i++) {
+        component_map[i] = i;
+    }
+
+    for (int i = 0; i < nnodes; i++) {
+        for (int j = 0; j < nnodes; j++) {
+            if (solution[i] == j) {
+                component_map[j] = component_map[i];
+            }
+        }
+    }
 }

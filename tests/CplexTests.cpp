@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "cplex_builder.c"
+#include "utils.c"
 #define ROOTDIR "../../"
 
 

@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     libx11-6 \
     libxext6 \
     libxrender1 \
+    libcunit1  \
+    libcunit1-doc  \
+    libcunit1-dev \
     libxtst6 \
     libgtk2.0-0 \
     libxt6 \
