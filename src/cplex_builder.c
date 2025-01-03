@@ -4,6 +4,159 @@
 
 #include "cplex_builder.h"
 
+#define EPS 1e-5
+// Function to create a node
+Node *createNode(int vertex) {
+    Node *newNode = (Node *) malloc(sizeof(Node));
+    newNode->vertex = vertex;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Function to create a graph
+Graph *createGraph(int vertices) {
+    Graph *graph = (Graph *) malloc(sizeof(Graph));
+    graph->numVertices = vertices;
+
+    // Create adjacency lists and visited array
+    graph->adjLists = (Node **) malloc(vertices * sizeof(Node *));
+    graph->visited = (int *) malloc(vertices * sizeof(int));
+
+    for (int i = 0; i < vertices; i++) {
+        graph->adjLists[i] = NULL; // Initialize adjacency lists as empty
+        graph->visited[i] = 0; // Initialize visited array to "not visited"
+    }
+
+    return graph;
+}
+
+// Add an undirected edge to the graph
+void addEdge(Graph *graph, int src, int dest) {
+    // Check to avoid duplicates (optional for safety)
+    Node *temp = graph->adjLists[src];
+    while (temp != NULL) {
+        if (temp->vertex == dest) {
+            return; // Edge already exists, ignore
+        }
+        temp = temp->next;
+    }
+
+    // Add dest to src's adjacency list
+    Node *newNode = createNode(dest);
+    newNode->next = graph->adjLists[src];
+    graph->adjLists[src] = newNode;
+
+    // Add src to dest's adjacency list (undirected graph)
+    newNode = createNode(src);
+    newNode->next = graph->adjLists[dest];
+    graph->adjLists[dest] = newNode;
+}
+
+// Function to populate the graph using a solution vector
+Graph *populateGraph(int edges[][2], int edgeCount) {
+    // Find the number of nodes dynamically (max node ID + 1)
+    int maxNode = 0;
+    for (int i = 0; i < edgeCount; i++) {
+        if (edges[i][0] > maxNode) maxNode = edges[i][0];
+        if (edges[i][1] > maxNode) maxNode = edges[i][1];
+    }
+    int numVertices = maxNode + 1;
+
+    // Create the graph
+    Graph *graph = createGraph(numVertices);
+
+    // Add edges to the graph
+    for (int i = 0; i < edgeCount; i++) {
+        addEdge(graph, edges[i][0], edges[i][1]);
+    }
+
+    return graph;
+}
+
+// DFS to find connected components
+void dfs(Graph *graph, int vertex, int *component, int *componentSize) {
+    graph->visited[vertex] = 1; // Mark node as visited
+    component[(*componentSize)++] = vertex; // Add vertex to the connected component
+
+    Node *adjList = graph->adjLists[vertex];
+    Node *temp = adjList;
+
+    // Traverse all its neighbors
+    while (temp != NULL) {
+        int connectedVertex = temp->vertex;
+        if (!graph->visited[connectedVertex]) {
+            dfs(graph, connectedVertex, component, componentSize);
+        }
+        temp = temp->next;
+    }
+}
+
+// Function to find connected components in the graph
+void findConnectedComponents(Graph *graph) {
+    int *component = (int *) malloc(graph->numVertices * sizeof(int)); // Temporary array for a component
+
+    printf("Connected components:\n");
+    for (int i = 0; i < graph->numVertices; i++) {
+        if (!graph->visited[i]) {
+            int componentSize = 0;
+
+            // Perform DFS starting from this vertex to find all nodes in the current connected component
+            dfs(graph, i, component, &componentSize);
+
+            // Print the discovered connected component
+            printf("Component: ");
+            for (int j = 0; j < componentSize; j++) {
+                printf("%d ", component[j]);
+            }
+            printf("\n");
+        }
+    }
+
+    free(component);
+}
+
+void findConnectedComponentsFromSolution(int *solution, int nnodes, int *component_map) {
+    bool *visited = (bool *) calloc(nnodes, sizeof(bool)); // Keep track of visited nodes
+    int currentComponent = 0; // Current component index
+
+    for (int i = 0; i < nnodes; i++) {
+        component_map[i] = -1;
+    }
+
+
+    free(visited);
+}
+
+
+// Print adjacency list of the graph (for verification/debugging)
+void printGraph(Graph *graph) {
+    printf("Graph adjacency list:\n");
+    for (int i = 0; i < graph->numVertices; i++) {
+        printf("Vertex %d: ", i);
+        Node *temp = graph->adjLists[i];
+        while (temp) {
+            printf("%d -> ", temp->vertex);
+            temp = temp->next;
+        }
+        printf("NULL\n");
+    }
+}
+
+// Free memory allocated for the graph
+void freeGraph(Graph *graph) {
+    for (int i = 0; i < graph->numVertices; i++) {
+        Node *temp = graph->adjLists[i];
+        while (temp) {
+            Node *toFree = temp;
+            temp = temp->next;
+            free(toFree);
+        }
+    }
+    free(graph->adjLists);
+    free(graph->visited);
+    free(graph);
+}
+
 double dist(int i, int j, instance *inst) {
     double dx = inst->xcoord[i] - inst->xcoord[j];
     double dy = inst->ycoord[i] - inst->ycoord[j];
@@ -21,6 +174,56 @@ int get_cplex_variable_index(int i, int j, instance *inst) // to be verified
 }
 
 int VERBOSE = 10000;
+
+void build_solution(const double *xstar, instance *instance, int *succ, int *comp, int *ncomp) {
+#ifdef  DEBUG
+
+    int *degree = (int *) calloc(instance->nnodes, sizeof(int));
+    for (int i=0; i < instance->nnodes; i++) {
+        for (int j = i+1 ; j < instance->nnodes; j++) {
+            int xpos = get_cplex_variable_index(i, j, instance)
+            if (fabs(xstar[xpos]) > EPS && fabs(xstar[xpos]-1.0) > EPS) print_error("ERROR: invalid value for xpos")
+
+            if (xstar[xpos] > 0.5) {
+                ++degree[i];
+                ++degree[j];
+            }
+        }
+    }
+    for (int i=0; i < instance->nnodes; i++) {
+        if (degree[i] != 2) print_error("ERROR: invalid solution")
+    }
+
+#endif
+
+    *ncomp = 0;
+    for (int i = 0; i < instance->nnodes; i++) {
+        succ[i] = -1;
+        comp[i] = -1;
+    }
+
+    for (int start = 0; start < instance->nnodes; start++) {
+        if (comp[start] >= 0) continue;
+
+        (*ncomp)++;
+        int i = start;
+        bool done = false;
+        while (!done) {
+            comp[i] = *ncomp;
+            done = true;
+            for (int j = 0; j < instance->nnodes; j++) {
+                if (i != j && xstar[get_cplex_variable_index(i, j, instance)] > 0.5 && comp[j] == -1) {
+                    succ[i] = j;
+                    i = j;
+                    done = false;
+                    break;
+                }
+            }
+        }
+        succ[i] = start;
+    }
+}
+
 
 void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
     double zero = 0.0;
@@ -76,13 +279,9 @@ void build_model(instance *inst, CPXENVptr env, CPXLPptr lp) {
     if (VERBOSE >= 100) CPXwriteprob(env, lp, "model.lp", NULL);
 }
 
-int TSPopt(instance *inst) {
+double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
     // open CPLEX model
     int error;
-    CPXENVptr env = CPXopenCPLEX(&error);
-    if (error) print_error("CPXopenCPLEX() error");
-    CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
-    if (error) print_error("CPXcreateprob() error");
 
     build_model(inst, env, lp);
 
@@ -115,36 +314,20 @@ int TSPopt(instance *inst) {
             }
         }
     }
-    free(xstar);
 
-    // free and close cplex model
-    CPXfreeprob(env, &lp);
-    CPXcloseCPLEX(&env);
-
-    return 0; // or an appropriate nonzero error code
+    return xstar;
 }
 
-void find_connected_components(int *solution, int *component_map, int nnodes) {
-    component_map = (int *) calloc(nnodes, sizeof(int));
-
-    for (int i = 0; i < nnodes; i++) {
-        component_map[i] = i;
-    }
-
-    for (int i = 0; i < nnodes; i++) {
-        int connected_node = solution[i];
-        component_map[connected_node] = component_map[i];
-    }
-}
 
 void add_bender_constraint(const int *component_map, instance *instance, CPXENVptr env, CPXLPptr lp, int ncomponents) {
     if (ncomponents == 1) return;
 
     double right_hand_side_value = 1.0;
+    int ncols = CPXgetnumcols(env, lp);
+    int *index = (int *) calloc(ncols, sizeof(int));
+    double *coefficients = (double *) calloc(ncols, sizeof(double));
 
     for (int k = 0; k < ncomponents; k++) {
-        int *index = (int *) calloc(instance->nnodes, sizeof(int));
-        double *coefficients = (double *) calloc(instance->nnodes, sizeof(double));
         int non_zero_variables_count = 0;
         char constraint_sense = 'L';
         for (int i = 0; i < instance->nnodes; i++) {
@@ -161,7 +344,8 @@ void add_bender_constraint(const int *component_map, instance *instance, CPXENVp
                        coefficients, NULL, NULL)) {
             print_error("CPXaddrows(): error 1");
         }
-        free(index);
-        free(coefficients);
     }
+
+    free(index);
+    free(coefficients);
 }

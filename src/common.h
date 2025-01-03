@@ -8,5 +8,6 @@
 #include <stdlib.h>
 #include <cplex.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stddef.h>
 #endif //COMMON_H
