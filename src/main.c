@@ -31,31 +31,18 @@ int main() {
     strcpy(inst.input_file, "../data/att48.tsp");
     read_input(&inst);
     build_model(&inst, env, lp);
-    double* xstar = TSPopt(&inst, env, lp);
-    CPXwriteprob(env, lp, "model.lp", NULL);
+    double* xstar;
     int *component_map;
     int *succ;
     int *ncomp;
-    init_data_struct(inst, &component_map, &succ, &ncomp);
 
-    build_solution(xstar, &inst, succ, component_map, ncomp);
-    //
-    add_bender_constraint(component_map, &inst, env, lp, *ncomp);
-    //
-    CPXwriteprob(env, lp, "model_2", "lp");
-    //
-    xstar = TSPopt(&inst, env, lp);
 
-    init_data_struct(inst, &component_map, &succ, &ncomp);
-
-    build_solution(xstar, &inst, succ, component_map, ncomp);
-
-    add_bender_constraint(component_map, &inst, env, lp, *ncomp);
-
-    CPXwriteprob(env, lp, "model_3.lp", NULL);
-
-    xstar = TSPopt(&inst, env, lp);
-
+    do {
+        xstar = TSPopt(&inst, env, lp);
+        init_data_struct(inst, &component_map, &succ, &ncomp);
+        build_solution(xstar, &inst, succ, component_map, ncomp);
+        add_bender_constraint(component_map, &inst, env, lp, *ncomp);
+    }while (*ncomp > 1);
 
 
     free(component_map);
