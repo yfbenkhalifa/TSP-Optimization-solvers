@@ -4,7 +4,6 @@
 
 #include <gtest/gtest.h>
 #include "cplex_builder.c"
-#include "utils.c"
 #define ROOTDIR "../../"
 
 
@@ -16,7 +15,6 @@ TEST(CplexTests, BuildCplexInstanceTest) {
     instance inst;
     strcpy(inst.input_file, "NULL");
     strcpy(inst.input_file, file.c_str());
-    read_input(&inst);
 
     // // open CPLEX model
     int error;

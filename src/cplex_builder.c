@@ -175,7 +175,7 @@ int get_cplex_variable_index(int i, int j, instance *inst) // to be verified
 
 int VERBOSE = 10000;
 
-void build_solution(const double *xstar, instance *instance, int *succ, int *comp, int *ncomp) {
+void build_solution(double *xstar, instance *instance, int *succ, int *comp, int *ncomp) {
 #ifdef  DEBUG
 
     int *degree = (int *) calloc(instance->nnodes, sizeof(int));
@@ -283,14 +283,6 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
     // open CPLEX model
     int error;
 
-    build_model(inst, env, lp);
-
-    // Cplex's parameter setting
-    CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
-    if (VERBOSE >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON); // Cplex output on screen
-    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 123456);
-    CPXsetdblparam(env, CPX_PARAM_TILIM, 3600.0);
-    // ...
 
     error = CPXmipopt(env, lp);
     if (error) {
@@ -298,8 +290,6 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
         print_error("CPXmipopt() error");
     }
 
-    // use the optimal solution found by CPLEX
-    inst->solution = (int *) calloc(inst->nnodes, sizeof(int));
     int ncols = CPXgetnumcols(env, lp);
     double *xstar = (double *) calloc(ncols, sizeof(double));
     int cpxgetx_error = CPXgetx(env, lp, xstar, 0, ncols - 1);
@@ -310,7 +300,6 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
         for (int j = i + 1; j < inst->nnodes; j++) {
             if (xstar[get_cplex_variable_index(i, j, inst)] > 0.5) {
                 printf("  ... x(%3d,%3d) = 1\n", i + 1, j + 1);
-                inst->solution[i] = j;
             }
         }
     }
@@ -318,17 +307,24 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
     return xstar;
 }
 
+void add_bender_constraint_from_component(int *component, instance *instance, CPXENVptr env, CPXLPptr lp, int component_length) {
+    int constraint_rhs_value = component_length;
+
+
+}
+
 
 void add_bender_constraint(const int *component_map, instance *instance, CPXENVptr env, CPXLPptr lp, int ncomponents) {
     if (ncomponents == 1) return;
 
-    double right_hand_side_value = 1.0;
+    double right_hand_side_value = 0.0;
     int ncols = CPXgetnumcols(env, lp);
     int *index = (int *) calloc(ncols, sizeof(int));
     double *coefficients = (double *) calloc(ncols, sizeof(double));
-
-    for (int k = 0; k < ncomponents; k++) {
+    int izero = 0;
+    for (int k = 1; k <= ncomponents; k++) {
         int non_zero_variables_count = 0;
+        right_hand_side_value = 0.0;
         char constraint_sense = 'L';
         for (int i = 0; i < instance->nnodes; i++) {
             if (component_map[i] != k) continue;
@@ -340,7 +336,9 @@ void add_bender_constraint(const int *component_map, instance *instance, CPXENVp
                 non_zero_variables_count++;
             }
         }
-        if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense, NULL, index,
+        right_hand_side_value--;
+        if (right_hand_side_value >= instance->nnodes) continue;
+        if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense, &izero, index,
                        coefficients, NULL, NULL)) {
             print_error("CPXaddrows(): error 1");
         }

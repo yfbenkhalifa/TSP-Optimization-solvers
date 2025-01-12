@@ -87,6 +87,24 @@ double euclidean_distance(double x1, double y1, double x2, double y2, bool round
     return sqrt(dx*dx + dy*dy);
 }
 
+void generate_random_instance(instance* inst, int nnodes, int seed) {
+    srand(seed);
+    inst->nnodes = nnodes;
+    inst->xcoord = (double*)malloc(nnodes * sizeof(double));
+    inst->ycoord = (double*)malloc(nnodes * sizeof(double));
+    inst->demand = (double*)malloc(nnodes * sizeof(double));
+
+    for (int i = 0; i < nnodes; i++) {
+        inst->xcoord[i] = (double)rand() / RAND_MAX * 100.0; // Random x coordinate between 0 and 100
+        inst->ycoord[i] = (double)rand() / RAND_MAX * 100.0; // Random y coordinate between 0 and 100
+        inst->demand[i] = (double)rand() / RAND_MAX * 10.0;  // Random demand between 0 and 10
+    }
+
+    inst->depot = 0; // Assuming the first node is the depot
+    inst->capacity = 50.0; // Example vehicle capacity
+    inst->nveh = 1; // Example number of vehicles
+}
+
 
 void read_input(instance *inst)
 {
