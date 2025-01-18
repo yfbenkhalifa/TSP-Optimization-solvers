@@ -299,7 +299,7 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
             if (xstar[get_cplex_variable_index(i, j, inst)] > 0.5) {
-                printf("  ... x(%3d,%3d) = 1\n", i + 1, j + 1);
+                printf("  ... x(%3d,%3d) = 1\n", i, j);
             }
         }
     }
@@ -307,15 +307,9 @@ double* TSPopt(instance *inst, CPXENVptr env, CPXLPptr lp) {
     return xstar;
 }
 
-void add_bender_constraint_from_component(int *component, instance *instance, CPXENVptr env, CPXLPptr lp, int component_length) {
-    int constraint_rhs_value = component_length;
 
-
-}
-
-
-void add_bender_constraint(const int *component_map, instance *instance, CPXENVptr env, CPXLPptr lp, int ncomponents) {
-    if (ncomponents == 1) return;
+int add_bender_constraint(const int *component_map, instance *instance, CPXENVptr env, CPXLPptr lp, int ncomponents) {
+    if (ncomponents == 1) return 0;
 
     double right_hand_side_value = 0.0;
     int ncols = CPXgetnumcols(env, lp);
@@ -341,9 +335,67 @@ void add_bender_constraint(const int *component_map, instance *instance, CPXENVp
         if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense, &izero, index,
                        coefficients, NULL, NULL)) {
             print_error("CPXaddrows(): error 1");
+            return 1;
         }
     }
 
     free(index);
     free(coefficients);
+    return 0;
+}
+
+void init_data_struct(instance *inst, int **component_map, int **succ, int **ncomp) {
+    *component_map = (int *)malloc(inst->nnodes * sizeof(int));
+    *succ = (int *)malloc(inst->nnodes * sizeof(int));
+    *ncomp = (int *)malloc(sizeof(int));
+}
+
+int cplex_tsp_branch_and_cut(instance *instance,  int *solution, int _verbose)
+{
+    int error = 0;
+    CPXENVptr env = CPXopenCPLEX(&error);
+    if (error) print_error("CPXopenCPLEX() error");
+    CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
+    if (error) print_error("CPXcreateprob() error");
+    // Cplex's parameter setting
+    CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+    if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON); // Cplex output on screen
+    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 4);
+    CPXsetdblparam(env, CPX_PARAM_TILIM, 3600); // time limit
+    CPXsetintparam(env, CPX_PARAM_CUTUP, CPX_INFBOUND); // disable the cut-off
+    build_model(instance, env, lp);
+    double* xstar;
+    int *component_map;
+    int *succ;
+    int *ncomp;
+
+
+    do {
+        xstar = TSPopt(instance, env, lp);
+        init_data_struct(instance, &component_map, &succ, &ncomp);
+        build_solution(xstar, instance, succ, component_map, ncomp);
+        error = add_bender_constraint(component_map, instance, env, lp, *ncomp);
+    }while (*ncomp > 1);
+
+    int *edge_predecessor = (int *)malloc(instance->nnodes * sizeof(int));
+    int *edge_successor = (int *)malloc(instance->nnodes * sizeof(int));
+    for (int i = 0; i < instance->nnodes; i++) {
+        solution[i] = -1; // Initialize the solution array
+    }
+
+    for (int i = 0; i < instance->nnodes; i++) {
+        for (int j = 0; j < instance->nnodes; j++) {
+            if (i != j && xstar[get_cplex_variable_index(i, j, instance)] > 0.5) {
+                
+            }
+        }
+    }
+
+
+    free(component_map);
+    free(succ);
+    free(xstar);
+
+
+    return error;
 }

@@ -7,49 +7,43 @@
 #include "cplex_builder.h"
 
 
-void init_data_struct(instance inst, int **component_map, int **succ, int **ncomp) {
-    *component_map = (int *)malloc(inst.nnodes * sizeof(int));
-    *succ = (int *)malloc(inst.nnodes * sizeof(int));
-    *ncomp = (int *)malloc(sizeof(int));
+void print_solution(instance* inst, int* solution)
+{
+    for (int i = 0; i < inst->nnodes; i++)
+    {
+        printf("%d -> %d\n", i, solution[i]);
+    }
 }
 
-int main() {
+void export_to_gnuplot(instance* inst, int* solution)
+{
+    FILE *fout = fopen("./data.dat", "w");
+    if (fout == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    for (int i = 0; i < inst->nnodes; i++) {
+        int next_node = solution[i];
+        fprintf(fout, "%f %f %d\n", inst->xcoord[i], inst->ycoord[i], i);
+        fprintf(fout, "%f %f %d\n\n", inst->xcoord[next_node], inst->ycoord[next_node], next_node);
+    }
+
+    fclose(fout);
+}
+
+int main()
+{
     int VERBOSE = 10000;
     instance inst;
     int error;
-    CPXENVptr env = CPXopenCPLEX(&error);
-    if (error) print_error("CPXopenCPLEX() error");
-    CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
-    if (error) print_error("CPXcreateprob() error");
-    // Cplex's parameter setting
-    CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
-    if (VERBOSE >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON); // Cplex output on screen
-    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 4);
-    CPXsetdblparam(env, CPX_PARAM_TILIM, 3600); // time limit
-    CPXsetintparam(env, CPX_PARAM_CUTUP, CPX_INFBOUND); // disable the cut-off
 
-    strcpy(inst.input_file, "../data/att48.tsp");
+    strcpy(inst.input_file, "../data/tsp_mock.tsp");
     read_input(&inst);
-    build_model(&inst, env, lp);
-    double* xstar;
-    int *component_map;
-    int *succ;
-    int *ncomp;
-
-
-    do {
-        xstar = TSPopt(&inst, env, lp);
-        init_data_struct(inst, &component_map, &succ, &ncomp);
-        build_solution(xstar, &inst, succ, component_map, ncomp);
-        add_bender_constraint(component_map, &inst, env, lp, *ncomp);
-    }while (*ncomp > 1);
-
-
-    free(component_map);
-    free(xstar);
-    free(inst.solution);
+    int* solution = (int*)calloc(inst.nnodes, sizeof(int));
+    error = cplex_tsp_branch_and_cut(&inst, solution, VERBOSE);
+    export_to_gnuplot(&inst, solution);
+    print_solution(&inst, solution);
+    system("gnuplot ./gnuplot_commands.txt");
     return 0;
 }
-
-
-
