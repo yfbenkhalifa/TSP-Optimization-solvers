@@ -37,6 +37,8 @@ add_executable(or2_project src/main.c
         src/common.h
         src/tsp_common.c
         src/tsp_common.h
+        src/cplex_callbacks.c
+        src/cplex_callbacks.h
 
 )
 
