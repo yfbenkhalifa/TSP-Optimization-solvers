@@ -20,7 +20,6 @@ bool is_neighbor(const int *solution, const int *neighbor, int size);
 void tsp_greedy(instance* inst, int starting_node);
 void tsp_extra_mileage(instance* inst, pair starting_pair);
 solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count);
-double compute_solution_cost(instance* inst, const int* solution);
 pair euclidean_most_distant_pair(instance* inst);
 double tsp_two_opt(instance* inst);
 void two_opt_swap(int *solution, int size, Edge e1, Edge e2);

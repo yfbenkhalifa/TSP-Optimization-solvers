@@ -72,6 +72,7 @@ typedef struct {
     int ystart;
     int fstart;
     int zstart;
+    int ncols;
 } instance;
 
 typedef struct
@@ -93,4 +94,5 @@ typedef struct {
 } Solution;
 
 void print_error(const char *err);
+double compute_solution_cost(const instance *instance, const int *solution);
 #endif //TSP_COMMON_H
