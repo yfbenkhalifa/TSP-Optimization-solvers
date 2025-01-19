@@ -108,7 +108,6 @@ void generate_random_instance(instance* inst, int nnodes, int seed) {
 
 void read_input(instance *inst)
 {
-
     FILE *fin = fopen(inst->input_file, "r");
     if ( fin == NULL ) print_error(" input file not found!");
 

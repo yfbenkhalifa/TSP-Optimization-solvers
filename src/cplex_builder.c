@@ -134,7 +134,7 @@ int cplex_tsp_callback(instance *instance, int *solution, int _verbose, CPXLONG 
 
     build_model(instance, env, lp);
     if (contextid == NULL) contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
-    if ( CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance) ) print_error("CPXcallbacksetfunc() error");
+    if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance)) print_error("CPXcallbacksetfunc() error");
     error = CPXmipopt(env, lp);
 
     CPXgetobjval(env, lp, &upper_bound);
