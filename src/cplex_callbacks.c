@@ -23,10 +23,19 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
     instance* inst = (instance*) userhandle;
     double* xstar = (double*) malloc(inst->ncols * sizeof(double));
     double objval = CPX_INFBOUND;
-    if ( CPXcallbackgetcandidatepoint(context, xstar, 0, inst->ncols-1, &objval) ) print_error("CPXcallbackgetcandidatepoint error");
+    int error = CPXcallbackgetcandidatepoint(context, xstar, 0, inst->ncols-1, &objval);
+    if ( error )
+    {
+        free(xstar);
+        print_error("CPXcallbackgetcandidatepoint error");
+    }
 
-    double incumbent = CPX_INFBOUND; CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
+    double incumbent = CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
     // if ( VERBOSE >= 100 ) printf(" ... callback at node %5d thread %2d incumbent %10.2lf, candidate value %10.2lf\n", .....);
+
+    error = cplex_hard_fixing(inst, context, 0.3);
+    if ( error ) print_error("cplex_hard_fixing error");
+
     int *component_map;
     int *succ;
     int *ncomp;

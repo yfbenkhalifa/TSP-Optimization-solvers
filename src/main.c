@@ -61,8 +61,8 @@ int main(int argc, char *argv[]) {
 
     }else if (strcmp(method, "cplex_callback_candidate") == 0) {
         error = cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
-    }else if (strcmp(method, "cplex_callback_relaxation") == 0) {
-        error = cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_RELAXATION);
+    }else if (strcmp(method, "cplex_callback_hard_fixing") == 0) {
+        error = cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
     }
     else if (strcmp(method, "tsp_greedy") == 0) {
 
