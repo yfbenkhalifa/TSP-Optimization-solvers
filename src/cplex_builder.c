@@ -208,7 +208,7 @@ int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double 
     return error;
 }
 
-int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid){
+int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid, bool apply_local_branching){
     int error = 0;
     CPXENVptr env = CPXopenCPLEX(&error);
     if (error) print_error("CPXopenCPLEX() error");
@@ -234,4 +234,30 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     instance->best_cost_value = compute_solution_cost(instance, solution);
 
     return error;
+}
+
+void add_local_branching_constraint(instance *inst, CPXENVptr env, CPXLPptr lp, int *solution, int k) {
+    int *index = (int *)calloc(inst->nnodes, sizeof(int));
+    double *value = (double *)calloc(inst->nnodes, sizeof(double));
+    double rhs = k;
+    char sense = 'L'; // 'L' for less than or equal to constraint
+
+    int non_zero_variables_count = 0;
+    for (int i = 0; i < inst->nnodes; i++) {
+        for (int j = i + 1; j < inst->nnodes; j++) {
+            if (solution[i] == j || solution[j] == i) {
+                index[non_zero_variables_count] = get_cplex_variable_index(i, j, inst);
+                value[non_zero_variables_count] = 1.0;
+                non_zero_variables_count++;
+            }
+        }
+    }
+
+    int izero = 0;
+    if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &rhs, &sense, &izero, index, value, NULL, NULL)) {
+        print_error("CPXaddrows(): error adding local branching constraint");
+    }
+
+    free(index);
+    free(value);
 }
