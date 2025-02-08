@@ -1,0 +1,86 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Operations Reserach 2 Final Thesis}
+\author{Youssef Ben Khalifa}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the CPLEX optimization LP optimization framework. 
+\subsection{The Traveling Salesman Problem}
+The Traveling Salesman Problem is among the most disucssed and researched problems in the field of Operations Research.
+
+\paragraph{Mathematical Formulation}
+The TSP can be formulated as an optimization problem as follows:
+\begin{equation}
+    \min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
+\end{equation}
+subject to:
+\begin{equation}
+    \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
+    \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
+    u_i - u_j + nx_{ij} \leq n-1 \quad \forall i \in \{2, \ldots, n\}, j \in \{2, \ldots, n\}
+\end{equation}
+\begin{equation}
+    x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
+    u_i \in \mathit{text} \quad \forall i \in \{1, \ldots, n\}
+\end{equation}
+
+
+\section{TSP data structure}
+Throught the implementation of the Metaheuristics and Mathheuristics, we will be using the following data structures:
+\begin{itemize}
+    \item \text{instance} : A structure that holds the TSP instance data. This is implemented as a C data structure 
+    in which we hold all the metadata relevant to the loaded TSP instance.
+    \item \text{solution} : A structure that holds the TSP solution data. Normally this is represented as a simple integer array in which we map for every nodex 
+    index its successor in the tour. This type of solution representation suits both the indirected and directed graph cases.
+\end{itemize}
+The code for the data structures implementation can be found in the appendinx section.
+\section{TSP Metaheuristics}
+
+\subsection{Greedy Randomized Adaptive Search (GRASP)}
+
+\subsection{Extra Mileage}
+
+\subsection{Two-Opt}
+
+\subsection{Tabu Search}
+
+
+\section{TSP with CPLEX}
+
+\subsection{Bender's subtour elimination method}
+
+\subsection{Patching Heuristic}
+
+\subsection{CPLEX Callback implementation}
+
+
+\newpage
+
+\bibliographystyle{alpha}
+\bibliography{sample}
+
+
+\end{document}

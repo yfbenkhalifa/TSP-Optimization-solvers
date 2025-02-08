@@ -76,3 +76,11 @@ dkms.conf
 /cmake-build-debug/
 /cmake-build-debug-docker/
 /cmake-build-debug-wsl/
+test.txt
+report/main.aux
+report/main.bbl
+report/main.blg
+report/main.fdb_latexmk
+report/main.fls
+report/main.log
+report/main.synctex.gz
