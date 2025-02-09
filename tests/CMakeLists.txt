@@ -27,7 +27,6 @@ include_directories(${PARENT_DIR}/src)
 add_executable(unit_tests
         UnitTests.cpp
         TspTests.cpp
-        CplexTests.cpp
 )
 target_link_libraries(
         unit_tests

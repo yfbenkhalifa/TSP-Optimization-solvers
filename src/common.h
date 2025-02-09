@@ -11,4 +11,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <time.h>
 #endif //COMMON_H

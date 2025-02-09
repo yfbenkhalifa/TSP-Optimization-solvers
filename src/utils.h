@@ -11,6 +11,15 @@
 #include "tsp_common.h"
 
 
+typedef enum {
+    LOG_LEVEL_ERROR,
+    LOG_LEVEL_WARNING,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_DEBUG
+} LogLevel;
+
+void log_message(LogLevel level, const char *format, ...);
+void log_results_to_csv(const char *filename, instance *inst);
 void read_input(instance *inst);
 void parse_command_line(int argc, char** argv, instance *inst);
 void free_instance(instance *inst);

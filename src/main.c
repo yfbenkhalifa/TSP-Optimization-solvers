@@ -57,12 +57,11 @@ int main(int argc, char *argv[]) {
     int* solution = (int*)calloc(inst.nnodes, sizeof(int));
 
     if (strcmp(method, "branch_and_cut") == 0) {
-        error = cplex_tsp_branch_and_cut(&inst, solution, VERBOSE);
-
+        cplex_tsp_branch_and_cut(&inst, solution, VERBOSE);
     }else if (strcmp(method, "cplex_callback_candidate") == 0) {
-        error = cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
+        cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
     }else if (strcmp(method, "cplex_callback_hard_fixing") == 0) {
-        error = cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
+        cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
     }
     else if (strcmp(method, "tsp_greedy") == 0) {
 
@@ -78,7 +77,8 @@ int main(int argc, char *argv[]) {
         system("gnuplot ./gnuplot_commands.txt");
     }
 
-    printf("Best solution cost: %d\n", inst.best_cost_value);
+    printf("Best known solution cost: %f \n", inst.best_known_solution_value);
+    printf("Best solution cost: %f \n", inst.best_cost_value);
     free(solution);
     return 0;
 }

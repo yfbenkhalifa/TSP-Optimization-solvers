@@ -102,7 +102,7 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
     // Cplex's parameter setting
     CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
     if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON); // Cplex output on screen
-    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 4);
+    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 43);
     CPXsetdblparam(env, CPX_PARAM_TILIM, 3600); // time limit
     CPXsetintparam(env, CPX_PARAM_CUTUP, CPX_INFBOUND); // disable the cut-off
     build_model(instance, env, lp);
@@ -219,8 +219,8 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
 
     CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
     if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
-    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 43);
-    CPXsetdblparam(env, CPX_PARAM_TILIM, 3600);
+    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 1);
+    CPXsetdblparam(env, CPX_PARAM_TILIM, 36000);
     CPXsetintparam(env, CPX_PARAM_CUTUP, upper_bound);
 
     build_model(instance, env, lp);

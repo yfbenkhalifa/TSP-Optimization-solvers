@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "tsp.c"
+#include "tsp_common.c"
 #define ROOTDIR "../../"
 
 instance read_instance()
@@ -33,7 +34,7 @@ TEST(TspTests, GreedyHeuristicTest)
     instance inst = read_instance();
     int solution[inst.nnodes];
     init_solution(&inst, solution);
-    tsp_greedy(&inst, 0);
+    tsp_grasp(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
@@ -94,7 +95,7 @@ TEST(TspTests, GreedyGraspWithTwoOptTest)
 {
     instance inst = read_instance();
     int solution[inst.nnodes];
-    tsp_greedy(&inst, 0);
+    tsp_grasp(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
@@ -131,12 +132,12 @@ TEST(TspTests, TabuSearchTest) {
     int solution[inst.nnodes];
 
     // Initialize the solution with a starting point, e.g., a greedy solution
-    tsp_greedy(&inst, 0);
+    tsp_grasp(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double greedy_final_cost = compute_solution_cost(&inst, solution);
 
     // Run Tabu Search
-    tabu_search(solution, inst.nnodes);
+    tabu_search(&inst, solution, inst.nnodes);
 
     // Update the instance with the new solution
     memcpy(inst.solution, solution, inst.nnodes * sizeof(int));
