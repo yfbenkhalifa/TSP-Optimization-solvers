@@ -73,6 +73,7 @@ typedef struct {
     int fstart;
     int zstart;
     int ncols;
+    double elapsed_time;
 } instance;
 
 typedef struct

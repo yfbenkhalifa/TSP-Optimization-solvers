@@ -5,7 +5,8 @@
 #include "utils.h"
 #define VERBOSE 50
 
-void log_results_to_csv(const char *filename, instance *inst) {
+void log_results_to_csv(const char *filename, const char *instance, const char *method_name, double best_cost,
+                        double elapsed_time) {
     FILE *csv_file = fopen(filename, "a");
     if (!csv_file) {
         perror("Failed to open CSV file");
@@ -15,11 +16,11 @@ void log_results_to_csv(const char *filename, instance *inst) {
     // Write the header if the file is empty
     fseek(csv_file, 0, SEEK_END);
     if (ftell(csv_file) == 0) {
-        fprintf(csv_file, "Instance,Best Cost,Elapsed Time\n");
+        fprintf(csv_file, "Instance, Method Name,Best Cost,Elapsed Time\n");
     }
 
     // Log the results
-    fprintf(csv_file, "%s,%f,%f\n", inst->input_file, inst->best_cost_value, inst->elapsed_time);
+    fprintf(csv_file, "%s, %s,%f,%f\n", instance, method_name, best_cost, elapsed_time);
 
     fclose(csv_file);
 }

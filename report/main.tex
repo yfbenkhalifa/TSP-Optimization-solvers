@@ -1,5 +1,33 @@
 \documentclass{article}
+\usepackage{listings}
+\usepackage{listings}
+\usepackage{xcolor}
 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{code}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=code}
 % Language setting
 % Replace `english' with e.g. `spanish' to change the document language
 \usepackage[english]{babel}
@@ -21,49 +49,142 @@
 
 \section{Introduction}
 
-In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the CPLEX optimization LP optimization framework. 
+In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the CPLEX optimization LP optimization framework.
 \subsection{The Traveling Salesman Problem}
 The Traveling Salesman Problem is among the most disucssed and researched problems in the field of Operations Research.
 
 \paragraph{Mathematical Formulation}
 The TSP can be formulated as an optimization problem as follows:
 \begin{equation}
-    \min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
+	\min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
 \end{equation}
 subject to:
 \begin{equation}
-    \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
+	\sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
 \end{equation}
 \begin{equation}
-    \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
+	\sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
 \end{equation}
 \begin{equation}
-    u_i - u_j + nx_{ij} \leq n-1 \quad \forall i \in \{2, \ldots, n\}, j \in \{2, \ldots, n\}
+	u_i - u_j + nx_{ij} \leq n-1 \quad \forall i \in \{2, \ldots, n\}, j \in \{2, \ldots, n\}
 \end{equation}
 \begin{equation}
-    x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
+	x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
 \end{equation}
 \begin{equation}
-    u_i \in \mathit{text} \quad \forall i \in \{1, \ldots, n\}
+	u_i \in \mathit{text} \quad \forall i \in \{1, \ldots, n\}
 \end{equation}
 
 
 \section{TSP data structure}
 Throught the implementation of the Metaheuristics and Mathheuristics, we will be using the following data structures:
 \begin{itemize}
-    \item \text{instance} : A structure that holds the TSP instance data. This is implemented as a C data structure 
-    in which we hold all the metadata relevant to the loaded TSP instance.
-    \item \text{solution} : A structure that holds the TSP solution data. Normally this is represented as a simple integer array in which we map for every nodex 
-    index its successor in the tour. This type of solution representation suits both the indirected and directed graph cases.
+	\item \text{instance} : A structure that holds the TSP instance data. This is implemented as a C data structure
+	      in which we hold all the metadata relevant to the loaded TSP instance.
+	\item \text{solution} : A structure that holds the TSP solution data. Normally this is represented as a simple integer array in which we map for every nodex
+	      index its successor in the tour. This type of solution representation suits both the indirected and directed graph cases.
 \end{itemize}
 The code for the data structures implementation can be found in the appendinx section.
-\section{TSP Metaheuristics}
 
+The cost functio used is the euclidean distance between two nodes in the graph.
+The code for the implementation can be found in the appendix section \ref{appendix:euclidean_distance}.
+\section{TSP Heurisitcs}
 \subsection{Greedy Randomized Adaptive Search (GRASP)}
+The GRASP method is basically a greedy randomized adaptive search procedure.
+It consists of two main phases: construction and local search.
+In the construction phase, a feasible solution is built, one element at a time, in a greedy randomized fashion.
+In the local search phase, the neighborhood of the constructed solution is explored until a local minimum is found.
+
+\paragraph{Construction Phase}
+In the construction phase, the solution is built iteratively. At each iteration, a candidate list is created,
+containing the best elements to be added to the solution. One of these elements is chosen randomly, according
+to a probability distribution, and added to the solution.
+
+\paragraph{Local Search Phase}
+In the local search phase, the algorithm explores the neighborhood of the constructed solution to find a local minimum.
+This is done by iteratively replacing the current solution with a better solution from its neighborhood,
+until no better solution can be found.
+
+\paragraph{Algorithm}
+The GRASP algorithm can be summarized as follows:
+\begin{enumerate}
+	\item \textbf{Initialization:} Set the best solution found to null.
+	\item \textbf{Construction:} Build a feasible solution using the greedy randomized approach.
+	\item \textbf{Local Search:} Improve the constructed solution using local search.
+	\item \textbf{Update:} If the improved solution is better than the best solution found, update the best solution.
+	\item \textbf{Termination:} Repeat steps 2-4 until a stopping criterion is met (e.g., a maximum number of iterations).
+\end{enumerate}
+
+\paragraph{Implementation}
+The GRASP algorithm is implemented as follows:
+\begin{enumerate} \item \textbf{Initialization}:
+	      \begin{itemize} \item The function starts by recording the start time for performance measurement.
+		      \item It logs the start of the GRASP process and details about the instance, including the number of nodes and their coordinates. \end{itemize}
+	\item \textbf{Setup}:
+	      \begin{itemize}
+		      \item The function initializes the current node index to the starting node (which is passed as an argument) and sets the remaining nodes count to the total number of nodes.
+		      \item It allocates memory for the solution and remaining nodes arrays.
+		      \item The solution array is initialized with \texttt{-1} to indicate that no nodes have been visited yet.
+		      \item The remaining nodes array is initialized with all node indices.
+	      \end{itemize}
+
+	\item \textbf{Main Loop}:
+	      \begin{itemize}
+		      \item The function iterates over all nodes to construct the solution.
+		      \item For each node, it finds the nearest unvisited node using the \texttt{euclidean\_nearest\_node} function.
+		      \item If no nearest node is found (i.e., all nodes are visited), it connects the current node back to the starting node to complete the tour.
+		      \item Otherwise, it updates the solution with the nearest node and logs the current node index and nearest node found.
+		      \item The current node index is updated to the nearest node for the next iteration.
+	      \end{itemize}
+
+	\item \textbf{Finalization}:
+	      \begin{itemize}
+		      \item After constructing the solution, the function records the end time and calculates the elapsed time.
+		      \item It logs the total time taken and the cost of the solution.
+		      \item Finally, it frees the allocated memory for the remaining nodes array.
+	      \end{itemize}
+\end{enumerate}
+The code of the imeplementation can be found in the appendix section \ref{appendix:tsp_grasp}.
 
 \subsection{Extra Mileage}
+In the extra mileage heuristic, we try to build a valid tsp solution starting an edge of the graph and we try and build a tour by selecting the adjacent edge with the minimum cost.
 
-\subsection{Two-Opt}
+\paragraph{Algorithm}
+The extra mileage algorithm can be summarized as follows:
+\begin{enumerate}
+	\item \textbf{Initialization:} Initialize the starting edge.
+	\item \textbf{Construction:} Build a feasible solution by iteratively selecting the edge with the minimum cost.
+	\item \textbf{Update:} If the improved solution is better than the best solution found, update the best solution.
+	\item \textbf{Termination:} Repeat steps 2-3 until a stopping criterion is met (e.g., a maximum number of iterations).
+\end{enumerate}
+
+\paragraph{Implementation}
+The extra mileage algorithm is implemented as follows:
+\begin{enumerate} \item \textbf{Initialization}: \begin{itemize} \item The function starts by recording the start time for performance measurement. \item It logs the start of the Extra Mileage process and details about the instance, including the number of nodes and their coordinates. \end{itemize}
+	\item \textbf{Setup}:
+	      \begin{itemize}
+		      \item The function initializes the solution with the most distant pair of nodes using the \\
+              \texttt{euclidean\_most\_distant\_pair} function.
+		      \item It marks these nodes as covered and updates the solution to reflect this initial pair.
+	      \end{itemize}
+
+	\item \textbf{Main Loop}:
+	      \begin{itemize}
+		      \item While there are uncovered nodes:
+		            \begin{itemize}
+			            \item For each covered node, it finds the nearest uncovered node that results in the smallest increase in the total tour length.
+			            \item It updates the solution to include this node and marks it as covered.
+		            \end{itemize}
+	      \end{itemize}
+
+	\item \textbf{Finalization}:
+	      \begin{itemize}
+		      \item Once all nodes are covered, the function calculates the total cost of the solution.
+		      \item It records the end time and calculates the elapsed time.
+		      \item It logs the total time taken and the cost of the solution.
+	      \end{itemize}
+\end{enumerate}
+the code for the implementation can be found in the appendix section \ref{appendix:tsp_extra_mileage}.
 
 \subsection{Tabu Search}
 
@@ -82,5 +203,6 @@ The code for the data structures implementation can be found in the appendinx se
 \bibliographystyle{alpha}
 \bibliography{sample}
 
+\include{appendix}
 
 \end{document}

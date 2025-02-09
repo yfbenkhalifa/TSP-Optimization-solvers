@@ -161,6 +161,7 @@ void tsp_grasp(instance* inst, int starting_node) {
 
     clock_t end_time = clock();
     double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    inst->elapsed_time = elapsed_time;
     log_message(LOG_LEVEL_INFO, "GRASP solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "GRASP solution cost: %f\n", inst->best_cost_value);
 
@@ -284,9 +285,9 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
     }
 
     inst->best_cost_value = compute_solution_cost(inst, inst->solution);
-
     clock_t end_time = clock();
     double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    inst->elapsed_time = elapsed_time;
     log_message(LOG_LEVEL_INFO, "Extra Mileage solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "Extra Mileage solution cost: %f\n", inst->best_cost_value);
 }
@@ -384,9 +385,7 @@ void tabu_search(instance* inst, int *initial_solution, int size) {
     log_message(LOG_LEVEL_INFO, "Solving TSP with Tabu Search\n");
     log_message(LOG_LEVEL_INFO, "Current best known solution cost: %f\n", inst->best_cost_value);
     log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
-    for (int i = 0; i < inst->nnodes; i++) {
-        log_message(LOG_LEVEL_INFO, "Node %d: (%f, %f)\n", i, inst->xcoord[i], inst->ycoord[i]);
-    }
+
 
     int **tabu_list = (int **)malloc(TABU_TENURE * sizeof(int *));
     for (int i = 0; i < TABU_TENURE; i++) {
@@ -397,7 +396,7 @@ void tabu_search(instance* inst, int *initial_solution, int size) {
     Solution best_solution;
     best_solution.solution = (int *)malloc(size * sizeof(int));
     memcpy(best_solution.solution, initial_solution, size * sizeof(int));
-    best_solution.cost = evaluate_solution(initial_solution, size);
+    best_solution.cost = compute_solution_cost(inst, best_solution.solution);
 
     Solution current_solution = best_solution;
 
@@ -442,6 +441,7 @@ void tabu_search(instance* inst, int *initial_solution, int size) {
 
     clock_t end_time = clock();
     double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    inst->elapsed_time = elapsed_time;
     log_message(LOG_LEVEL_INFO, "Tabu Search solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "Tabu Search solution cost: %f\n", best_solution.cost);
 

@@ -1,0 +1,138 @@
+\appendix
+\section{Metaheuristics}
+\subsection{GRASP}
+\label{appendix:tsp_grasp}
+\begin{lstlisting}[language=C]
+    void tsp_grasp(instance* inst, int starting_node) {
+        clock_t start_time = clock();
+        log_message(LOG_LEVEL_INFO, "Solving TSP with GRASP\n");
+        log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
+        for (int i = 0; i < inst->nnodes; i++) {
+            log_message(LOG_LEVEL_INFO, "Node %d: (%f, %f)\n", i, inst->xcoord[i], inst->ycoord[i]);
+        }
+        log_message(LOG_LEVEL_INFO, "Starting GRASP with starting node %d\n", starting_node);
+
+        int current_node_index = starting_node;
+        int remaining_nodes_count = inst->nnodes;
+        solution nearest_node;
+        int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
+
+        inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
+        inst->best_cost_value = 0;
+
+        // Initialize solution
+        for (int i = 0; i < inst->nnodes; i++) {
+            inst->solution[i] = -1;
+            remaining_nodes[i] = i;
+        }
+
+        remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
+
+        for (int i = 0; i < inst->nnodes; i++) {
+            log_message(LOG_LEVEL_INFO, "Current node index: %d\n", current_node_index);
+            nearest_node = euclidean_nearest_node(inst, current_node_index, remaining_nodes, &remaining_nodes_count);
+
+            if (nearest_node.node == -1) {
+                inst->solution[current_node_index] = starting_node;
+                inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
+                                                            inst->ycoord[current_node_index],
+                                                            inst->xcoord[starting_node],
+                                                            inst->ycoord[starting_node], false);
+                continue;
+            }
+            inst->solution[current_node_index] = nearest_node.node;
+            inst->best_cost_value += nearest_node.cost;
+            current_node_index = nearest_node.node;
+        }
+
+        clock_t end_time = clock();
+        double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+        inst->elapsed_time = elapsed_time;
+        log_message(LOG_LEVEL_INFO, "GRASP solution time: %f seconds\n", elapsed_time);
+        log_message(LOG_LEVEL_INFO, "GRASP solution cost: %f\n", inst->best_cost_value);
+
+        free(remaining_nodes);
+    }
+\end{lstlisting}
+\newpage
+
+\subsection{Extra Mileage}
+\label{appendix:tsp_extra_mileage}
+\begin{lstlisting}[language=C]
+void tsp_extra_mileage(instance* inst, pair starting_pair)
+{
+    clock_t start_time = clock();
+    log_message(LOG_LEVEL_INFO, "Solving TSP with Extra Mileage\n");
+    log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
+    for (int i = 0; i < inst->nnodes; i++) {
+        log_message(LOG_LEVEL_INFO, "Node %d: (%f, %f)\n", i, inst->xcoord[i], inst->ycoord[i]);
+    }
+
+    heuristic_state state;
+    pair current_pair = starting_pair;
+
+    initialize_instance(inst, &state);
+
+    inst->solution[current_pair.node1] = current_pair.node2;
+    inst->solution[current_pair.node2] = current_pair.node1;
+    state.covered_nodes[state.covered_nodes_count++] = current_pair.node1;
+    state.covered_nodes[state.covered_nodes_count++] = current_pair.node2;
+    state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
+    state.uncovered_nodes[current_pair.node2] = state.uncovered_nodes[--state.uncovered_nodes_count];
+
+    while (state.covered_nodes_count < inst->nnodes)
+    {
+        log_message(LOG_LEVEL_INFO, "Covered nodes count: %d\n", state.covered_nodes_count);
+        solution best_node;
+        for (int i = 0; i < state.covered_nodes_count; i++)
+        {
+            log_message(LOG_LEVEL_INFO, "Current node index: %d\n", i);
+            int current_node = state.covered_nodes[i];
+            int current_node_opposite = inst->solution[current_node];
+            double min_distance_delta = INFINITY;
+            best_node.node = -1;
+            best_node.node_index = -1;
+            for (int j = 0; j < state.uncovered_nodes_count; j++)
+            {
+                double distance1 = euclidean_distance(inst->xcoord[current_node],
+                                                      inst->ycoord[current_node],
+                                                      inst->xcoord[state.uncovered_nodes[j]],
+                                                      inst->ycoord[state.uncovered_nodes[j]], false);
+                double distance2 = euclidean_distance(inst->xcoord[state.uncovered_nodes[j]],
+                                                      inst->ycoord[state.uncovered_nodes[j]],
+                                                      inst->xcoord[current_node_opposite],
+                                                      inst->ycoord[current_node_opposite], false);
+                double existing_pair_distance = euclidean_distance(inst->xcoord[current_node],
+                                                                   inst->ycoord[current_node],
+                                                                   inst->xcoord[current_node_opposite],
+                                                                   inst->ycoord[current_node_opposite], false);
+
+                double distance_delta = distance1 + distance2 - existing_pair_distance;
+
+                if (distance_delta < min_distance_delta)
+                {
+                    min_distance_delta = distance_delta;
+                    best_node.node = state.uncovered_nodes[j];
+                    best_node.node_index = j;
+                    best_node.cost = distance_delta;
+                }
+            }
+            if (best_node.node > -1)
+            {
+                log_message(LOG_LEVEL_INFO, "Best node found: %d\n", best_node.node);
+                inst->solution[current_node] = best_node.node;
+                inst->solution[best_node.node] = current_node_opposite;
+                state.covered_nodes[state.covered_nodes_count++] = best_node.node;
+                state.uncovered_nodes[best_node.node_index] = state.uncovered_nodes[--state.uncovered_nodes_count];
+            }
+        }
+    }
+
+    inst->best_cost_value = compute_solution_cost(inst, inst->solution);
+    clock_t end_time = clock();
+    double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    inst->elapsed_time = elapsed_time;
+    log_message(LOG_LEVEL_INFO, "Extra Mileage solution time: %f seconds\n", elapsed_time);
+    log_message(LOG_LEVEL_INFO, "Extra Mileage solution cost: %f\n", inst->best_cost_value);
+}
+\end{lstlisting}

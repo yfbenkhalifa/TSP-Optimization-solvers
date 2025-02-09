@@ -39,6 +39,7 @@ TEST(TspTests, GreedyHeuristicTest)
     double final_cost = compute_solution_cost(&inst, solution);
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
+    log_results_to_csv("TSP_GRASP.csv", inst.input_file, "GRASP", final_cost, inst.elapsed_time);
 
 }
 

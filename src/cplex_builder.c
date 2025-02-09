@@ -208,7 +208,7 @@ int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double 
     return error;
 }
 
-int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid, bool apply_local_branching){
+int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid){
     int error = 0;
     CPXENVptr env = CPXopenCPLEX(&error);
     if (error) print_error("CPXopenCPLEX() error");
