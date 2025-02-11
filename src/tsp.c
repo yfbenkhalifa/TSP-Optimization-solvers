@@ -26,24 +26,27 @@ void init_solution(instance* inst, int* solution)
     }
 }
 
-bool is_neighbor(const int *solution1, const int *solution2, int size) {
+bool is_neighbor(const int* solution1, const int* solution2, int size)
+{
     int differing_edges = 0;
-    for (int i = 0; i < size; i++) {
-        if (solution1[i] != solution2[i]) {
+    for (int i = 0; i < size; i++)
+    {
+        if (solution1[i] != solution2[i])
+        {
             differing_edges++;
         }
     }
     return differing_edges == 2;
 }
 
-void two_opt_swap(int *solution, int size, Edge e1, Edge e2)
+void two_opt_swap(int* solution, int size, Edge e1, Edge e2)
 {
-    int *solution_copy = (int *)malloc(sizeof(int) * size);
+    int* solution_copy = (int*)malloc(sizeof(int) * size);
     solution[e1.node1] = e2.node1;
     int i = e1.node2;
     int temp = -1;
     memcpy(solution_copy, solution, size * sizeof(int));
-    while(i != e2.node1)
+    while (i != e2.node1)
     {
         temp = solution[i];
         solution_copy[temp] = i;
@@ -51,7 +54,6 @@ void two_opt_swap(int *solution, int size, Edge e1, Edge e2)
     }
     memcpy(solution, solution_copy, size * sizeof(int));
     solution[e1.node2] = e2.node2;
-
 }
 
 double tsp_two_opt(instance* instance)
@@ -73,24 +75,24 @@ double tsp_two_opt(instance* instance)
             int b2 = instance->solution[j];
 
             double cost_a1_a2 = euclidean_distance(instance->xcoord[a1],
-                                              instance->ycoord[a1],
-                                              instance->xcoord[a2],
-                                              instance->ycoord[a2], false);
+                                                   instance->ycoord[a1],
+                                                   instance->xcoord[a2],
+                                                   instance->ycoord[a2], false);
 
             double cost_b1_b2 = euclidean_distance(instance->xcoord[b1],
-                                              instance->ycoord[b1],
-                                              instance->xcoord[b2],
-                                              instance->ycoord[b2], false);
+                                                   instance->ycoord[b1],
+                                                   instance->xcoord[b2],
+                                                   instance->ycoord[b2], false);
 
             double cost_a1_b1 = euclidean_distance(instance->xcoord[a1],
-                                                 instance->ycoord[a1],
-                                                 instance->xcoord[b1],
-                                                 instance->ycoord[b1], false);
+                                                   instance->ycoord[a1],
+                                                   instance->xcoord[b1],
+                                                   instance->ycoord[b1], false);
 
             double cost_a2_b2 = euclidean_distance(instance->xcoord[a2],
-                                                 instance->ycoord[a2],
-                                                 instance->xcoord[b2],
-                                                 instance->ycoord[b2], false);
+                                                   instance->ycoord[a2],
+                                                   instance->xcoord[b2],
+                                                   instance->ycoord[b2], false);
 
             double currentDeltaCost = (cost_a1_b1 + cost_a2_b2) - (cost_a1_a2 + cost_b1_b2);
             if (currentDeltaCost < deltaCost)
@@ -117,11 +119,13 @@ double tsp_two_opt(instance* instance)
     return deltaCost;
 }
 
-void tsp_grasp(instance* inst, int starting_node) {
+void tsp_grasp(instance* inst, int starting_node)
+{
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with GRASP\n");
     log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         log_message(LOG_LEVEL_INFO, "Node %d: (%f, %f)\n", i, inst->xcoord[i], inst->ycoord[i]);
     }
     log_message(LOG_LEVEL_INFO, "Starting GRASP with starting node %d\n", starting_node);
@@ -135,18 +139,21 @@ void tsp_grasp(instance* inst, int starting_node) {
     inst->best_cost_value = 0;
 
     // Initialize solution
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         inst->solution[i] = -1;
         remaining_nodes[i] = i;
     }
 
     remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
 
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         log_message(LOG_LEVEL_INFO, "Current node index: %d\n", current_node_index);
         nearest_node = euclidean_nearest_node(inst, current_node_index, remaining_nodes, &remaining_nodes_count);
 
-        if (nearest_node.node == -1) {
+        if (nearest_node.node == -1)
+        {
             inst->solution[current_node_index] = starting_node;
             inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
                                                         inst->ycoord[current_node_index],
@@ -160,7 +167,7 @@ void tsp_grasp(instance* inst, int starting_node) {
     }
 
     clock_t end_time = clock();
-    double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
     inst->best_cost_value = compute_solution_cost(inst, inst->solution);
     log_message(LOG_LEVEL_INFO, "GRASP solution time: %f seconds\n", elapsed_time);
@@ -169,15 +176,18 @@ void tsp_grasp(instance* inst, int starting_node) {
     free(remaining_nodes);
 }
 
-void random_solution(instance *inst, int *solution) {
+void random_solution(instance* inst, int* solution)
+{
     // Initialize the solution with node indices
-    for (int i = 0; i < inst->nnodes; i++) {
+    for (int i = 0; i < inst->nnodes; i++)
+    {
         solution[i] = i;
     }
 
     // Shuffle the solution array to create a random solution
     srand(time(NULL));
-    for (int i = inst->nnodes - 1; i > 0; i--) {
+    for (int i = inst->nnodes - 1; i > 0; i--)
+    {
         int j = rand() % (i + 1);
         int temp = solution[i];
         solution[i] = solution[j];
@@ -185,27 +195,32 @@ void random_solution(instance *inst, int *solution) {
     }
 
     // Ensure the solution is a valid TSP solution
-    if (!is_tsp_solution(inst, solution)) {
+    if (!is_tsp_solution(inst, solution))
+    {
         random_solution(inst, solution); // Retry if the solution is not valid
     }
 }
 
-bool is_2opt_neighbour(int *solution1, int *solution2, int size) {
+bool is_2opt_neighbour(int* solution1, int* solution2, int size)
+{
     int differing_edges = 0;
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
             Edge e1, e2;
             e1.node1 = i;
             e1.node2 = solution1[i];
             e2.node1 = j;
             e2.node2 = solution1[j];
 
-            int *solution2_modified = (int *)malloc(size * sizeof(int));
+            int* solution2_modified = (int*)malloc(size * sizeof(int));
             memcpy(solution2_modified, solution1, size * sizeof(int));
             two_opt_swap(solution2_modified, size, e1, e2);
 
-            if (compare_solutions(solution2_modified, solution2, size)) {
-                differing_edges+=2;
+            if (compare_solutions(solution2_modified, solution2, size))
+            {
+                differing_edges += 2;
             }
             free(solution2_modified);
         }
@@ -213,17 +228,11 @@ bool is_2opt_neighbour(int *solution1, int *solution2, int size) {
     return differing_edges == 2;
 }
 
-
-
-
 void tsp_extra_mileage(instance* inst, pair starting_pair)
 {
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with Extra Mileage\n");
     log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
-    for (int i = 0; i < inst->nnodes; i++) {
-        log_message(LOG_LEVEL_INFO, "Node %d: (%f, %f)\n", i, inst->xcoord[i], inst->ycoord[i]);
-    }
 
     heuristic_state state;
     pair current_pair = starting_pair;
@@ -287,7 +296,7 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
 
     inst->best_cost_value = compute_solution_cost(inst, inst->solution);
     clock_t end_time = clock();
-    double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
     log_message(LOG_LEVEL_INFO, "Extra Mileage solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "Extra Mileage solution cost: %f\n", inst->best_cost_value);
@@ -381,31 +390,35 @@ double compute_geometric_mean(instance testBed[], int testBedSolutions[])
     return pow(product, 1.0 / num_instances);
 }
 
-void tabu_search(instance* inst, int *initial_solution, int size) {
+void tabu_search(instance* inst, int* initial_solution, int size)
+{
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with Tabu Search\n");
     log_message(LOG_LEVEL_INFO, "Current best known solution cost: %f\n", inst->best_cost_value);
     log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
 
 
-    int **tabu_list = (int **)malloc(TABU_TENURE * sizeof(int *));
-    for (int i = 0; i < TABU_TENURE; i++) {
-        tabu_list[i] = (int *)malloc(size * sizeof(int));
+    int** tabu_list = (int**)malloc(TABU_TENURE * sizeof(int*));
+    for (int i = 0; i < TABU_TENURE; i++)
+    {
+        tabu_list[i] = (int*)malloc(size * sizeof(int));
     }
     int tabu_index = 0;
 
     Solution best_solution;
-    best_solution.solution = (int *)malloc(size * sizeof(int));
+    best_solution.solution = (int*)malloc(size * sizeof(int));
     memcpy(best_solution.solution, initial_solution, size * sizeof(int));
     best_solution.cost = compute_solution_cost(inst, best_solution.solution);
 
     Solution current_solution = best_solution;
 
-    for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
+    for (int iter = 0; iter < MAX_ITERATIONS; iter++)
+    {
         int num_neighbors = size; // Number of neighbors to generate
-        int **neighbors = (int **)malloc(num_neighbors * sizeof(int *));
-        for (int i = 0; i < num_neighbors; i++) {
-            neighbors[i] = (int *)malloc(size * sizeof(int));
+        int** neighbors = (int**)malloc(num_neighbors * sizeof(int*));
+        for (int i = 0; i < num_neighbors; i++)
+        {
+            neighbors[i] = (int*)malloc(size * sizeof(int));
         }
         generate_neighbors(current_solution.solution, size, neighbors, num_neighbors);
 
@@ -413,24 +426,30 @@ void tabu_search(instance* inst, int *initial_solution, int size) {
         best_neighbor.solution = NULL;
         best_neighbor.cost = INT_MAX;
 
-        for (int i = 0; i < num_neighbors; i++) {
+        for (int i = 0; i < num_neighbors; i++)
+        {
             int cost = evaluate_solution(neighbors[i], size);
-            if (cost < best_neighbor.cost && !is_tabu(neighbors[i], tabu_list, TABU_TENURE, size)) {
+            if (cost < best_neighbor.cost && !is_tabu(neighbors[i], tabu_list, TABU_TENURE, size))
+            {
                 best_neighbor.solution = neighbors[i];
                 best_neighbor.cost = cost;
             }
         }
 
-        if (best_neighbor.solution != NULL) {
+        if (best_neighbor.solution != NULL)
+        {
             current_solution = best_neighbor;
-            if (current_solution.cost < best_solution.cost) {
+            if (current_solution.cost < best_solution.cost)
+            {
                 best_solution = current_solution;
             }
             add_to_tabu_list(current_solution.solution, tabu_list, &tabu_index, size);
         }
 
-        for (int i = 0; i < num_neighbors; i++) {
-            if (neighbors[i] != best_neighbor.solution) {
+        for (int i = 0; i < num_neighbors; i++)
+        {
+            if (neighbors[i] != best_neighbor.solution)
+            {
                 free(neighbors[i]);
             }
         }
@@ -441,30 +460,35 @@ void tabu_search(instance* inst, int *initial_solution, int size) {
     memcpy(inst->solution, best_solution.solution, size * sizeof(int));
 
     clock_t end_time = clock();
-    double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
     log_message(LOG_LEVEL_INFO, "Tabu Search solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "Tabu Search solution cost: %f\n", best_solution.cost);
 
     free(best_solution.solution);
-    for (int i = 0; i < TABU_TENURE; i++) {
+    for (int i = 0; i < TABU_TENURE; i++)
+    {
         free(tabu_list[i]);
     }
     free(tabu_list);
 }
 
-int evaluate_solution(int *solution, int size) {
+int evaluate_solution(int* solution, int size)
+{
     // Implement the evaluation function for the solution
     return 0;
 }
 
-void generate_neighbors(int *solution, int size, int **neighbors, int num_neighbors) {
-    for (int i = 0; i < num_neighbors; i++) {
-        neighbors[i] = (int *)malloc(size * sizeof(int));
+void generate_neighbors(int* solution, int size, int** neighbors, int num_neighbors)
+{
+    for (int i = 0; i < num_neighbors; i++)
+    {
+        neighbors[i] = (int*)malloc(size * sizeof(int));
         memcpy(neighbors[i], solution, size * sizeof(int));
         int index1 = rand() % size;
         int index2 = rand() % size;
-        while (index1 == index2) {
+        while (index1 == index2)
+        {
             index2 = rand() % size;
         }
         Edge e1, e2;
@@ -476,24 +500,31 @@ void generate_neighbors(int *solution, int size, int **neighbors, int num_neighb
     }
 }
 
-bool is_tabu(int *solution, int **tabu_list, int tabu_size, int size) {
-    for (int i = 0; i < tabu_size; i++) {
+bool is_tabu(int* solution, int** tabu_list, int tabu_size, int size)
+{
+    for (int i = 0; i < tabu_size; i++)
+    {
         bool is_same = true;
-        for (int j = 0; j < size; j++) {
-            if (solution[j] != tabu_list[i][j]) {
+        for (int j = 0; j < size; j++)
+        {
+            if (solution[j] != tabu_list[i][j])
+            {
                 is_same = false;
                 break;
             }
         }
-        if (is_same) {
+        if (is_same)
+        {
             return true;
         }
     }
     return false;
 }
 
-void add_to_tabu_list(int *solution, int **tabu_list, int *tabu_index, int size) {
-    for (int i = 0; i < size; i++) {
+void add_to_tabu_list(int* solution, int** tabu_list, int* tabu_index, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
         tabu_list[*tabu_index][i] = solution[i];
     }
     *tabu_index = (*tabu_index + 1) % TABU_TENURE;

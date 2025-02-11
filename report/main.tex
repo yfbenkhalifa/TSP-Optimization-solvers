@@ -208,30 +208,125 @@ The extra mileage algorithm can be summarized as follows:
 \end{enumerate}
 
 \paragraph{Implementation}
-The extra mileage algorithm is implemented as follows:
-\begin{enumerate} \item \textbf{Initialization}: \begin{itemize} \item The function starts by recording the start time for performance measurement. \item It logs the start of the Extra Mileage process and details about the instance, including the number of nodes and their coordinates. \end{itemize}
-	\item \textbf{Setup}:
-	      \begin{itemize}
-		      \item The function initializes the solution with the most distant pair of nodes using the \\
-              \texttt{euclidean\_most\_distant\_pair} function.
-		      \item It marks these nodes as covered and updates the solution to reflect this initial pair.
-	      \end{itemize}
+The extra mileage algoithm imeplementation takes as input arguments:
+\begin{itemize}
+	\item \texttt{instance}: The TSP instance data structure.
+	\item \texttt{starting\_pair}: The pair of nodes that will be used to start the tour.
+\end{itemize}
+\begin{lstlisting}[language=C]
+	void tsp_extra_mileage(instance* inst, pair starting_pair);
+\end{lstlisting}
+where the $pair$ data structure is defined as follows:
+\begin{lstlisting}[language=C]
+	typedef struct {
+		int node1;
+		int node2;
+	} pair;
+\end{lstlisting}
+An heuristic state data stcuture is also used to keep track of the covered nodes and the final solution.
+\begin{lstlisting}[language=C]
+	typedef struct
+	{
+		int covered_nodes_count;
+		int* covered_nodes;
+		int uncovered_nodes_count;
+		int* uncovered_nodes;
+	} heuristic_state;
+\end{lstlisting}
 
+Ideally the starting pair should be the most distant pair of nodes in the graph in order to optimize the construction of the solution,
+by design this is not a restriction that has been instrisically implemented into the function, so any pair of nodes can be used as a starting pair.
+The extra mileage algorithm is implemented as follows:
+\begin{enumerate} 
+	\item \textbf{Setup}:
+	\begin{itemize}
+		\item The function initializes the current\_pair to the starting pair (which is passed as an argument).
+		\item An heuristic state data stcuture is initialized to keep the track of the covered nodes and the final solution 
+	\end{itemize}
+	\begin{lstlisting}[language=C]
+		clock_t start_time = clock();
+		heuristic_state state;
+		pair current_pair = starting_pair;
+		initialize_instance(inst, &state);
+		inst->solution[current_pair.node1] = current_pair.node2;
+		inst->solution[current_pair.node2] = current_pair.node1;
+		state.covered_nodes[state.covered_nodes_count++] = current_pair.node1;
+		state.covered_nodes[state.covered_nodes_count++] = current_pair.node2;
+		state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
+		state.uncovered_nodes[current_pair.node2] = state.uncovered_nodes[--state.uncovered_nodes_count];
+	\end{lstlisting}
 	\item \textbf{Main Loop}:
 	      \begin{itemize}
-		      \item While there are uncovered nodes:
+		      \item While there are uncovered nodes (condition based on the comparison of the covered nodes count and the total number of nodes), 
+			  the function iterates over the uncovered nodes to construct the solution:
 		            \begin{itemize}
-			            \item For each covered node, it finds the nearest uncovered node that results in the smallest increase in the total tour length.
-			            \item It updates the solution to include this node and marks it as covered.
+			            \item For each covered node, a second loop is exectued to find the nearest uncovered node such that 
+			            the the resulting edge between the two nodes is the argument that minimizes the total cost of the tour up until that point.
+			            \item if such node is found, that node is selected and added to the tour, 
+						the covered nodes count is incremented and the node is removed from the uncovered nodes list.
 		            \end{itemize}
 	      \end{itemize}
+		  \begin{lstlisting}[language=C]
+			while (state.covered_nodes_count < inst->nnodes)
+			{
+				log_message(LOG_LEVEL_INFO, "Covered nodes count: %d\n", state.covered_nodes_count);
+				solution best_node;
+				for (int i = 0; i < state.covered_nodes_count; i++)
+				{
+					log_message(LOG_LEVEL_INFO, "Current node index: %d\n", i);
+					int current_node = state.covered_nodes[i];
+					int current_node_opposite = inst->solution[current_node];
+					double min_distance_delta = INFINITY;
+					best_node.node = -1;
+					best_node.node_index = -1;
+					for (int j = 0; j < state.uncovered_nodes_count; j++)
+					{
+						double distance1 = euclidean_distance(inst->xcoord[current_node],
+															inst->ycoord[current_node],
+															inst->xcoord[state.uncovered_nodes[j]],
+															inst->ycoord[state.uncovered_nodes[j]], false);
+						double distance2 = euclidean_distance(inst->xcoord[state.uncovered_nodes[j]],
+															inst->ycoord[state.uncovered_nodes[j]],
+															inst->xcoord[current_node_opposite],
+															inst->ycoord[current_node_opposite], false);
+						double existing_pair_distance = euclidean_distance(inst->xcoord[current_node],
+																		inst->ycoord[current_node],
+																		inst->xcoord[current_node_opposite],
+																		inst->ycoord[current_node_opposite], false);
+
+						double distance_delta = distance1 + distance2 - existing_pair_distance;
+
+						if (distance_delta < min_distance_delta)
+						{
+							min_distance_delta = distance_delta;
+							best_node.node = state.uncovered_nodes[j];
+							best_node.node_index = j;
+							best_node.cost = distance_delta;
+						}
+					}
+					if (best_node.node > -1)
+					{
+						log_message(LOG_LEVEL_INFO, "Best node found: %d\n", best_node.node);
+						inst->solution[current_node] = best_node.node;
+						inst->solution[best_node.node] = current_node_opposite;
+						state.covered_nodes[state.covered_nodes_count++] = best_node.node;
+						state.uncovered_nodes[best_node.node_index] = state.uncovered_nodes[--state.uncovered_nodes_count];
+					}
+				}
+    		}
+		  \end{lstlisting}
 
 	\item \textbf{Finalization}:
 	      \begin{itemize}
 		      \item Once all nodes are covered, the function calculates the total cost of the solution.
 		      \item It records the end time and calculates the elapsed time.
-		      \item It logs the total time taken and the cost of the solution.
 	      \end{itemize}
+		  \begin{lstlisting}[language=C]
+			inst->best_cost_value = compute_solution_cost(inst, inst->solution);
+			clock_t end_time = clock();
+			double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+			inst->elapsed_time = elapsed_time;
+		  \end{lstlisting}
 \end{enumerate}
 the code for the implementation can be found in the appendix section \ref{appendix:tsp_extra_mileage}.
 
@@ -254,6 +349,27 @@ The Tabu search algorithm can be summarized as follows:
               \item Increment the iteration count.
           \end{itemize}
     \item \textbf{Finalization:} Return the best solution found.
+\end{enumerate}
+
+\subsection{Variable Neighbourhood Search}
+The Variable Neighbourhood Search (VNS) is a metaheuristic that combines local search with a systematic change of the neighbourhood structure. The idea is to explore different
+neighbourhoods of the current solution to escape local optima and find better solutions.
+
+\paragraph{Algorithm}
+The VNS algorithm can be summarized as follows:
+\begin{enumerate}
+	\item \textbf{Initialization:} Initialize the current solution and the best solution found.
+	\item \textbf{Setup:} Initialize the neighbourhood structure and the current iteration count.
+	\item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
+		  \begin{itemize}
+			  \item Apply a local search algorithm to the current solution.
+			  \item Generate a new solution by applying a perturbation to the current solution.
+			  \item If the new solution is better than the current solution, update the current solution.
+			  \item If the current solution is better than the best solution found, update the best solution.
+			  \item Change the neighbourhood structure.
+			  \item Increment the iteration count.
+		  \end{itemize}
+	\item \textbf{Finalization:} Return the best solution found.
 \end{enumerate}
 
 
