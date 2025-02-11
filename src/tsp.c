@@ -162,6 +162,7 @@ void tsp_grasp(instance* inst, int starting_node) {
     clock_t end_time = clock();
     double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
+    inst->best_cost_value = compute_solution_cost(inst, inst->solution);
     log_message(LOG_LEVEL_INFO, "GRASP solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "GRASP solution cost: %f\n", inst->best_cost_value);
 
