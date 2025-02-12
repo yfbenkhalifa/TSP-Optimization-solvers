@@ -411,12 +411,12 @@ void tabu_search(instance* inst, int* initial_solution, int size)
     for (int iter = 0; iter < MAX_ITERATIONS; iter++)
     {
         int num_neighbors = size; // Number of neighbors to generate
-        int** neighbors = (int**)malloc(num_neighbors * sizeof(int*));
+        int** neighbours = (int**)malloc(num_neighbors * sizeof(int*));
         for (int i = 0; i < num_neighbors; i++)
         {
-            neighbors[i] = (int*)malloc(size * sizeof(int));
+            neighbours[i] = (int*)malloc(size * sizeof(int));
         }
-        generate_neighbors(current_solution.solution, size, neighbors, num_neighbors);
+        generate_neighbors(current_solution.solution, size, neighbours, num_neighbors);
 
         Solution best_neighbor;
         best_neighbor.solution = NULL;
@@ -424,10 +424,10 @@ void tabu_search(instance* inst, int* initial_solution, int size)
 
         for (int i = 0; i < num_neighbors; i++)
         {
-            int cost = evaluate_solution(neighbors[i], size);
-            if (cost < best_neighbor.cost && !is_tabu(neighbors[i], tabu_list, TABU_TENURE, size))
+            int cost = evaluate_solution(neighbours[i], size);
+            if (cost < best_neighbor.cost && !is_tabu(neighbours[i], tabu_list, TABU_TENURE, size))
             {
-                best_neighbor.solution = neighbors[i];
+                best_neighbor.solution = neighbours[i];
                 best_neighbor.cost = cost;
             }
         }
@@ -444,12 +444,12 @@ void tabu_search(instance* inst, int* initial_solution, int size)
 
         for (int i = 0; i < num_neighbors; i++)
         {
-            if (neighbors[i] != best_neighbor.solution)
+            if (neighbours[i] != best_neighbor.solution)
             {
-                free(neighbors[i]);
+                free(neighbours[i]);
             }
         }
-        free(neighbors);
+        free(neighbours);
     }
     inst->best_cost_value = compute_solution_cost(inst, best_solution.solution);
     log_message(LOG_LEVEL_INFO, "Best solution cost: %d\n", best_solution.cost);
@@ -482,15 +482,19 @@ void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
     memcpy(current_solution, initial_solution, inst->nnodes * sizeof(int));
     bool stop_criterion = true;
     int iterations_without_improvement = 0;
-    const int max_iterations = -1;
+    const int max_iterations = 100;
     const int time_limit_milliseconds = 3600;
-
+    const int max_stuck_iterations = 10;
+    double best_solution_cost = compute_solution_cost(inst, current_solution);
     do
     {
-        double current_solution_cost = evaluate_solution(current_solution, inst->nnodes);
+        log_message(LOG_LEVEL_INFO, "Iteration %d\n", iterations_without_improvement);
+        double current_solution_cost = compute_solution_cost(inst, current_solution);
+        log_message(LOG_LEVEL_INFO, "Current solution cost: %f\n", current_solution_cost);
         // generate new neighbour
-        int* neighbourhood = (int*)malloc(neighbourhood_size * inst->nnodes * sizeof(int));
-        generate_neighbors(current_solution, inst->nnodes, &neighbourhood, neighbourhood_size);
+        int** neighbourhood = (int**)malloc(neighbourhood_size * sizeof(int*));
+        log_message(LOG_LEVEL_INFO, "Generating new neighbour\n");
+        generate_neighbors(current_solution, inst->nnodes, neighbourhood, neighbourhood_size);
         int *selected_neighbour = (int*)malloc(inst->nnodes * sizeof(int));
         if (neighbourhood_size == 1)
         {
@@ -499,15 +503,17 @@ void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
         else
         {
             int random_index = rand() % neighbourhood_size;
-            memcpy(selected_neighbour, neighbourhood + random_index * inst->nnodes, inst->nnodes * sizeof(int));
+            memcpy(selected_neighbour, neighbourhood[random_index], inst->nnodes * sizeof(int));
         }
-
         // check new neighbour cost
-        double new_solution_cost = evaluate_solution(selected_neighbour, inst->nnodes);
+        double new_solution_cost = compute_solution_cost(inst, selected_neighbour);
 
+        log_message(LOG_LEVEL_INFO, "New neighbour cost: %f\n", new_solution_cost);
         if (new_solution_cost < current_solution_cost)
         {
+            log_message(LOG_LEVEL_INFO, "Better solution found...\n");
             memcpy(current_solution, selected_neighbour, inst->nnodes * sizeof(int));
+            best_solution_cost = new_solution_cost;
             iterations_without_improvement = 0;
         }
         else
@@ -520,11 +526,13 @@ void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
 
         if (time_limit_milliseconds > 0 && elapsed_time > time_limit_milliseconds)
         {
+            log_message(LOG_LEVEL_INFO, "Time limit reached\n");
             stop_criterion = false;
         }
 
         if (max_iterations > 0 && iterations_without_improvement > max_iterations)
         {
+            log_message(LOG_LEVEL_INFO, "Max iterations reached\n");
             stop_criterion = false;
         }
     }
@@ -535,6 +543,9 @@ void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
 
     // update elapsed time
     double total_elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
+
+    //update incumbent solution cost
+    inst->best_cost_value = best_solution_cost;
 
     // log the results
     log_message(LOG_LEVEL_INFO, "VNS solution time: %f seconds\n", total_elapsed_time);
@@ -547,7 +558,7 @@ int evaluate_solution(int* solution, int size)
     return 0;
 }
 
-void generate_neighbors(int* solution, int size, int **neighbors, int num_neighbors)
+void generate_neighbors(int* solution, int size, int** neighbors, int num_neighbors)
 {
     for (int i = 0; i < num_neighbors; i++)
     {

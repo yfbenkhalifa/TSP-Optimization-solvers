@@ -161,7 +161,7 @@ TEST(TspTests, VnsTest) {
     double greedy_final_cost = compute_solution_cost(&inst, solution);
 
     // Run Tabu Search
-    tsp_vns(&inst, solution, inst.nnodes);
+    tsp_vns(&inst, solution, 5);
 
     // Update the instance with the new solution
     memcpy(inst.solution, solution, inst.nnodes * sizeof(int));
