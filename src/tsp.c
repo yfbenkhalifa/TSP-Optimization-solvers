@@ -302,7 +302,6 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
     log_message(LOG_LEVEL_INFO, "Extra Mileage solution cost: %f\n", inst->best_cost_value);
 }
 
-
 void initialize_instance(instance* inst, heuristic_state* state)
 {
     state->covered_nodes_count = 0;
@@ -317,7 +316,6 @@ void initialize_instance(instance* inst, heuristic_state* state)
         state->uncovered_nodes[i] = i;
     }
 }
-
 
 pair euclidean_most_distant_pair(instance* inst)
 {
@@ -347,7 +345,6 @@ pair euclidean_most_distant_pair(instance* inst)
     return most_distant_pair;
 }
 
-
 solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count)
 {
     double min_distance = INFINITY;
@@ -374,7 +371,6 @@ solution euclidean_nearest_node(instance* instance, int node, int* remaining_nod
     remaining_nodes[nearest_node.node_index] = remaining_nodes[--*remaining_nodes_count];
     return nearest_node;
 }
-
 
 double compute_geometric_mean(instance testBed[], int testBedSolutions[])
 {
@@ -471,6 +467,68 @@ void tabu_search(instance* inst, int* initial_solution, int size)
         free(tabu_list[i]);
     }
     free(tabu_list);
+}
+
+void tsp_vns(instance* inst, int* initial_solution, int size)
+{
+    // initializ time and log
+    clock_t start_time = clock();
+    log_message(LOG_LEVEL_INFO, "Solving TSP with VNS\n");
+    log_message(LOG_LEVEL_INFO, "Current best known solution cost: %f\n", inst->best_cost_value);
+    log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", inst->nnodes);
+
+    // initialize the solution with the initial solution
+    int* current_solution = (int*)malloc(inst->nnodes * sizeof(int));
+    memcpy(current_solution, initial_solution, inst->nnodes * sizeof(int));
+    bool stop_criterion = true;
+    int iterations_without_improvement = 0;
+    const int max_iterations = -1;
+    const int time_limit_milliseconds = 3600;
+
+    do
+    {
+        double current_solution_cost = evaluate_solution(current_solution, inst->nnodes);
+        // generate new neighbour
+        int* new_solution = (int*)malloc(inst->nnodes * sizeof(int));
+        generate_neighbors(current_solution, inst->nnodes, &new_solution, 1);
+
+        // check new neighbour cost
+        double new_solution_cost = evaluate_solution(new_solution, inst->nnodes);
+
+        if (new_solution_cost < current_solution_cost)
+        {
+            memcpy(current_solution, new_solution, inst->nnodes * sizeof(int));
+            iterations_without_improvement = 0;
+        }
+        else
+        {
+            iterations_without_improvement++;
+        }
+
+
+        double elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
+
+        if (time_limit_milliseconds > 0 && elapsed_time > time_limit_milliseconds)
+        {
+            stop_criterion = false;
+        }
+
+        if (max_iterations > 0 && iterations_without_improvement > max_iterations)
+        {
+            stop_criterion = false;
+        }
+    }
+    while (stop_criterion);
+
+    // update the instance with the new solution
+    memcpy(inst->solution, current_solution, inst->nnodes * sizeof(int));
+
+    // update elapsed time
+    double total_elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
+
+    // log the results
+    log_message(LOG_LEVEL_INFO, "VNS solution time: %f seconds\n", total_elapsed_time);
+    log_message(LOG_LEVEL_INFO, "VNS solution cost: %f\n", inst->best_cost_value);
 }
 
 int evaluate_solution(int* solution, int size)

@@ -20,6 +20,7 @@ bool is_neighbor(const int *solution, const int *neighbor, int size);
 void tsp_grasp(instance* inst, int starting_node);
 void tsp_extra_mileage(instance* inst, pair starting_pair);
 void tabu_search(instance* inst, int *initial_solution, int size);
+void tsp_vns(instance* inst, int *initial_solution, int size);
 solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count);
 pair euclidean_most_distant_pair(instance* inst);
 double tsp_two_opt(instance* inst);
