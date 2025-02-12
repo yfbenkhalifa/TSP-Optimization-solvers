@@ -352,10 +352,15 @@ The Tabu search algorithm can be summarized as follows:
 \end{enumerate}
 
 \subsection{Variable Neighbourhood Search}
-The Variable Neighbourhood Search (VNS) is a metaheuristic that combines local search with a systematic change of the neighbourhood structure. The idea is to explore different
-neighbourhoods of the current solution to escape local optima and find better solutions.
+The Variable Neighbourhood Search (VNS) heuristic is a metaheuristic that combines local search with a systematic change of neighbourhood structures. 
+The idea is to explore different neighbourhoods of the current solution to escape local optima and find better solutions.
+Many formulations and version for the VNS algorithm have been proposed in the literature, such as the \textit{Basic VNS}, \textit{Reduced VNS} and \textit{General VNS}.\cite{VariableNeighborhood_Search}
+All of these forumlations are based on a neighbourhood search, which is defined within a solution space that can be explored using the \textit{two-opt move}, 
+\textit{three-opt move} or the \textit{k-opt move}, depending on the general scheme of the algorithm. These operations that can be made in the solution space for the TSP problem allow to generate a neighborhood
+starting from a given solution, each of which neighbour differ from one single \textit{k-opt move}. \cite{Heuristics_for_the_Traveling_Salesman_Problem} 
 
 \paragraph{Algorithm}
+In our imeplementation we will go over the General VNS scheme, in which the neighbours are simply generated from a single \textit{two-opt move}, and the \textit{shaking function} 
 The VNS algorithm can be summarized as follows:
 \begin{enumerate}
 	\item \textbf{Initialization:} Initialize the current solution and the best solution found.
