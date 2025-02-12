@@ -469,7 +469,7 @@ void tabu_search(instance* inst, int* initial_solution, int size)
     free(tabu_list);
 }
 
-void tsp_vns(instance* inst, int* initial_solution, int size)
+void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
 {
     // initializ time and log
     clock_t start_time = clock();
@@ -489,15 +489,25 @@ void tsp_vns(instance* inst, int* initial_solution, int size)
     {
         double current_solution_cost = evaluate_solution(current_solution, inst->nnodes);
         // generate new neighbour
-        int* new_solution = (int*)malloc(inst->nnodes * sizeof(int));
-        generate_neighbors(current_solution, inst->nnodes, &new_solution, 1);
+        int* neighbourhood = (int*)malloc(neighbourhood_size * inst->nnodes * sizeof(int));
+        generate_neighbors(current_solution, inst->nnodes, &neighbourhood, neighbourhood_size);
+        int *selected_neighbour = (int*)malloc(inst->nnodes * sizeof(int));
+        if (neighbourhood_size == 1)
+        {
+            memcpy(selected_neighbour, neighbourhood, inst->nnodes * sizeof(int));
+        }
+        else
+        {
+            int random_index = rand() % neighbourhood_size;
+            memcpy(selected_neighbour, neighbourhood + random_index * inst->nnodes, inst->nnodes * sizeof(int));
+        }
 
         // check new neighbour cost
-        double new_solution_cost = evaluate_solution(new_solution, inst->nnodes);
+        double new_solution_cost = evaluate_solution(selected_neighbour, inst->nnodes);
 
         if (new_solution_cost < current_solution_cost)
         {
-            memcpy(current_solution, new_solution, inst->nnodes * sizeof(int));
+            memcpy(current_solution, selected_neighbour, inst->nnodes * sizeof(int));
             iterations_without_improvement = 0;
         }
         else
@@ -537,7 +547,7 @@ int evaluate_solution(int* solution, int size)
     return 0;
 }
 
-void generate_neighbors(int* solution, int size, int** neighbors, int num_neighbors)
+void generate_neighbors(int* solution, int size, int **neighbors, int num_neighbors)
 {
     for (int i = 0; i < num_neighbors; i++)
     {
