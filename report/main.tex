@@ -379,9 +379,62 @@ The VNS algorithm can be summarized as follows:
 
 
 \section{TSP with CPLEX}
-\subsection{Modeling the TSP with CPLEX}
 
-\subsection{Bender's subtour elimination method}
+\subsection{Brief introduction to CPLEX}
+CPLEX is a high-performance optimization solver developed by IBM that can be used to solve linear programming (LP), mixed-integer programming (MIP), and quadratic programming (QP) problems.
+It provides a powerful API that allows users to model and solve optimization problems in a variety of programming languages, including C, C++, Java, and Python.
+
+In our case we will be using the C API to model and solve the TSP problem using CPLEX. The CPLEX C API provides a set of functions that allow users to create and manipulate optimization models, 
+set parameters, and solve the models.
+
+\subsection{Modeling the TSP with CPLEX}
+To model the TSP with CPLEX, we need to define the decision variables, constraints, and objective function of the problem. 
+The decision variables represent the edges of the graph, and the constraints ensure that each node is visited exactly once in the tour.
+The objective function is to minimize the total cost of the tour.
+
+\paragraph{CPLEX Environment}
+The first step in using CPLEX is to create an environment object that will be used to manage the optimization process.
+The environment object is created using the \texttt{CPXopenCPLEX} function, which returns a pointer to the CPLEX environment.
+
+\begin{lstlisting}[language=C]
+	CPXENVptr env = CPXopenCPLEX(&status);
+\end{lstlisting}
+
+\paragraph{Decision Variables}
+To define decision variables in the CPLEX environment we use the \texttt{CPXnewcols} function, which creates a set of new columns (variables) in the model.
+Each variable represents an edge in the graph and is binary (0 or 1) to indicate whether the edge is included in the tour.
+\begin{lstlisting}[language=C]
+	int num_edges = inst->nnodes * inst->nnodes;
+	double* lb = (double*)malloc(num_edges * sizeof(double));
+	double* ub = (double*)malloc(num_edges * sizeof(double));
+	char* xctype = (char*)malloc(num_edges * sizeof(char));
+	char** colnames = (char**)malloc(num_edges * sizeof(char*));
+	for (int i = 0; i < num_edges; i++) {
+		lb[i] = 0.0;
+		ub[i] = 1.0;
+		xctype[i] = 'B';
+		colnames[i] = (char*)malloc(100 * sizeof(char));
+		sprintf(colnames[i], "x_%d_%d", i / inst->nnodes, i % inst->nnodes);
+	}
+	status = CPXnewcols(env, lp, num_edges, NULL, lb, ub, xctype, colnames);
+\end{lstlisting}
+
+\subsection{Bender's subtour elimination method} 
+Up until this point we have just modelled a generic integer linear problem into cplex, but this does not solve the TSP problem.
+In order to have CPLEX return feasible solutions to the TSP problem, we need to add constraints that eliminate subtours in the solution.
+This can be done using the Bender's subtour elimination method, which is a cutting-plane algorithm that adds constraints to the model to eliminate subtours.
+
+\paragraph{Subtour Elimination Constraints}
+The subtour elimination constraints are defined as follows: 
+\begin{equation}
+	\sum_{i \in S} \sum_{j \in S} x_{ij} \leq |S| - 1 \quad \forall S \subset V, 2 \leq |S| \leq |V| - 1
+\end{equation}
+where $V$ is the set of nodes in the graph and $S$ is a subset of nodes that forms a subtour.
+
+\paragraph{Implementation}
+The implementation of the Bender's subtour elimination method involves adding the subtour elimination constraints to the model and solving the model iteratively until no subtours are found.
+This is done by adding a callback function to the CPLEX environment that is called after each iteration of the optimization process.
+The callback function checks for subtours in the solution and adds the corresponding subtour elimination constraints to the model.
 
 \subsection{Patching Heuristic}
 
