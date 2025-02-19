@@ -7,17 +7,6 @@
 
 #define VERBOSE 50
 
-bool is_tsp_solution(instance* inst, int* solution)
-{
-    for (int i = 0; i < inst->nnodes; i++)
-    {
-        if (solution[i] == -1) return false;
-    }
-    if (has_duplicates(inst, solution)) return false;
-    if (!is_acyclic(inst, solution)) return false;
-    return true;
-}
-
 void init_solution(instance* inst, int* solution)
 {
     for (int i = 0; i < inst->nnodes; i++)

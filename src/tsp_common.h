@@ -96,4 +96,5 @@ typedef struct {
 
 void print_error(const char *err);
 double compute_solution_cost(const instance *instance, const int *solution);
+bool is_tsp_solution(instance* inst, int* solution);
 #endif //TSP_COMMON_H

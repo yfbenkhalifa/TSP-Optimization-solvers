@@ -7,7 +7,12 @@
 #include "common.h"
 #include <cplex.h>
 #include "tsp_common.h"
-#endif //CPLEX_COMMON_H
+
+
+typedef enum{
+    CPLEX_SOLVE_BRANCH_AND_CUT,
+    CPLEX_SOLVE_CALLBACK
+}CplexSolveType;
 
 void build_solution(double *xstar, instance *instance, int *succ, int *comp, int *ncomp);
 int add_bender_constraint(CPXENVptr env, CPXLPptr lp, CPXCALLBACKCONTEXTptr context, const int *component_map,
@@ -15,3 +20,5 @@ int add_bender_constraint(CPXENVptr env, CPXLPptr lp, CPXCALLBACKCONTEXTptr cont
 int get_cplex_variable_index(int i, int j, instance *inst);
 double dist(int i, int j, instance *inst);
 void init_data_struct(instance *inst, int **component_map, int **succ, int **ncomp);
+
+#endif //CPLEX_COMMON_H

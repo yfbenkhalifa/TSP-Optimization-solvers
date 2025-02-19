@@ -433,12 +433,153 @@ where $V$ is the set of nodes in the graph and $S$ is a subset of nodes that for
 
 \paragraph{Implementation}
 The implementation of the Bender's subtour elimination method involves adding the subtour elimination constraints to the model and solving the model iteratively until no subtours are found.
-This is done by adding a callback function to the CPLEX environment that is called after each iteration of the optimization process.
-The callback function checks for subtours in the solution and adds the corresponding subtour elimination constraints to the model.
+This is can be done in two ways:
+\begin{enumerate}
+    \item \textbf{Iterative Approach:} Solve the model, check for subtours in the solution, and add constraints for each subtour found. This process continues until a solution with no subtours is obtained. The steps are:
+    \begin{itemize}
+        \item Solve the initial TSP model
+        \item Find connected components in the solution graph
+        \item If multiple components exist, add subtour elimination constraints
+        \item Repeat until only one component remains
+    \end{itemize}
+    
+    \item \textbf{CPLEX Callback Approach:} Utilize CPLEX's lazy constraint callback mechanism to add subtour elimination constraints during the optimization process. This approach:
+    \begin{itemize}
+        \item Registers a callback function with CPLEX
+        \item CPLEX calls this function whenever it finds a new integer feasible solution
+        \item The callback checks for subtours and adds necessary constraints immediately
+        \item More efficient as it integrates with CPLEX's branch-and-cut framework
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Iterative Approach}
+Here is the implementation of the iterative approach to the Bender's subtour elimination method:
+\begin{enumerate} 
+	\item \textbf{Setup}:
+	      \begin{itemize}
+		      \item The function initializes the current node index to the starting node (which is passed as an argument) 
+			  and sets the remaining nodes count to the total number of nodes.
+		      \item It allocates memory for the solution array and remaining nodes arrays. These two arrays will be used respectively to store the tour and the remaining nodes for the main loop to visit.
+		      \item The solution array is initialized with \texttt{-1} to indicate that no nodes have been visited yet.
+		      \item The remaining nodes array is initialized with all node indices.
+	      \end{itemize}
+
+		\begin{lstlisting}[language=C]
+			clock_t start_time = clock();
+			int current_node_index = starting_node;
+			int remaining_nodes_count = inst->nnodes;
+			solution nearest_node;
+			int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
+			inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
+			inst->best_cost_value = 0;
+			for (int i = 0; i < inst->nnodes; i++) {
+				inst->solution[i] = -1;
+				remaining_nodes[i] = i;
+			}
+			remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
+		\end{lstlisting}
+
+	\item \textbf{Main Loop}:
+	      \begin{itemize}
+		      \item The function iterates over all nodes to construct the solution.
+		      \item For each node, it finds the nearest unvisited node using the \texttt{euclidean\_nearest\_node} function.
+		      \item If no nearest node is found (i.e., all nodes are visited), it connects the current node back to the starting node to complete the tour.
+		      \item Otherwise, it updates the solution with the nearest node and logs the current node index and nearest node found.
+		      \item The current node index is updated to the nearest node for the next iteration.
+	      \end{itemize}
+		  \begin{lstlisting}[language=C]
+			do
+			{
+				xstar = TSPopt(instance, env, lp);
+				init_data_struct(instance, &component_map, &succ, &ncomp);
+				build_solution(xstar, instance, solution, component_map, ncomp);
+				error = add_bender_constraint(env, lp, NULL, component_map, instance, *ncomp);
+			}while (*ncomp > 1);
+		  \end{lstlisting}
+
+	\item \textbf{Finalization}:
+	      \begin{itemize}
+		      \item After constructing the solution, the function records the end time and calculates the elapsed time.
+		      \item It logs the total time taken and the cost of the solution.
+		      \item Finally, it frees the allocated memory for the remaining nodes array.
+	      \end{itemize}
+		\begin{lstlisting}[language=C]
+			clock_t end_time = clock();
+			double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+			inst->elapsed_time = elapsed_time;
+			inst->best_cost_value = compute_solution_cost(inst, inst->solution);
+		\end{lstlisting}
+\end{enumerate}
+
+\paragraph{CPLEX Callback Approach}
+Here is the implementation of the CPLEX callback approach to the Bender's subtour elimination method:
+\begin{enumerate}
+	\item \textbf{Setup}:
+	\begin{itemize}
+		\item Initialize the CPLEX environment and the TSP instance data structure.
+		\item Create and build the TSP CPLEX model.
+		\item Register the lazy constraint callback function with CPLEX using the \texttt{CPXcallbacksetfunc} function provided by the CPLEX API.
+	\end{itemize}
+	\begin{lstlisting}[language=C]
+		int error = 0;
+		CPXENVptr env = CPXopenCPLEX(&error);
+		if (error) print_error("CPXopenCPLEX() error");
+		CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
+		if (error) print_error("CPXcreateprob() error");
+		double lower_bound = -CPX_INFBOUND;
+		double upper_bound = CPX_INFBOUND;
+
+		CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
+		if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+		CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 1);
+		CPXsetdblparam(env, CPX_PARAM_TILIM, 36000);
+		CPXsetintparam(env, CPX_PARAM_CUTUP, upper_bound);
+
+		build_model(instance, env, lp);
+		if (contextid == NULL) contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
+		if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance)) print_error("CPXcallbacksetfunc() error");
+	\end{lstlisting}
+	\item \textbf{Lazy Constraint Callback Function}:
+	\begin{itemize}
+		\item The lazy constraint callback function is called by CPLEX whenever a new integer feasible solution is found. (Note: this solution may not be a valid TSP tour);
+		\item The solution is built and checked for subtours using the \texttt{build\_solution} function.
+		\item The function checks the number of connected components in the solution and adds necessary constraints to eliminate them.
+		\item It uses the \texttt{CPXcutcallbackadd} function to add the subtour elimination constraints to the model.
+		\item The callback function returns control to CPLEX after adding the constraints.
+	\end{itemize}
+	\begin{lstlisting}[language=C]
+		
+	\end{lstlisting}
+	\item \textbf{Main Loop}:
+	\begin{itemize}
+		\item Solve the model using CPLEX and the lazy constraint callback function.
+		\item CPLEX will call the callback function whenever a new integer feasible solution is found.
+		\item The callback function will add subtour elimination constraints to the model.
+		\item Repeat until CPLEX returns a valid TSP solution, that is a solution such that the number of subtours is equal to 1.
+	\end{itemize}
+	\item \textbf{Finalization}:
+	\begin{itemize}
+		\item After solving the model, the function records the end time and calculates the elapsed time.
+		\item It logs the total time taken and the cost of the solution.
+		\item Finally, it frees the allocated memory for the solution and the TSP instance data structure.
+	\end{itemize}
+\end{enumerate}
 
 \subsection{Patching Heuristic}
 
-\subsection{CPLEX Callback implementation}
+
+\section{Mathheuristics}
+The Mathheuristics are a class of optimization algorithms that combine mathematical programming techniques with heuristics to solve combinatorial optimization problems.
+They are typically used to find high-quality solutions to difficult problems that cannot be solved optimally using traditional methods.
+In our case we will in particular focues on the Local Branching and Fixed Branching Mathheuristics.
+
+\subsection{Local Branching}
+The idea behind Local Branching is to optimize the solution search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
+This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution.
+The implementation involves selecting a set of variables, representing the edges of the tour, 
+
+
+\subsection{Fixed Branching}
 
 
 \newpage

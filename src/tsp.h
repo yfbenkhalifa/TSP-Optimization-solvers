@@ -14,7 +14,7 @@
 #define TABU_TENURE 5
 #define MAX_ITERATIONS 100
 
-bool is_tsp_solution(instance* inst, int* solution);
+
 void init_solution(instance* inst, int* solution);
 bool is_neighbor(const int *solution, const int *neighbor, int size);
 void tsp_grasp(instance* inst, int starting_node);

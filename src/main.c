@@ -77,8 +77,6 @@ int main(int argc, char *argv[]) {
         system("gnuplot ./gnuplot_commands.txt");
     }
 
-    printf("Best known solution cost: %f \n", inst.best_known_solution_value);
-    printf("Best solution cost: %f \n", inst.best_cost_value);
     free(solution);
     return 0;
 }
