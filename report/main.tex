@@ -569,18 +569,28 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 
 
 \section{Mathheuristics}
-The Mathheuristics are a class of optimization algorithms that combine mathematical programming techniques with heuristics to solve combinatorial optimization problems.
-They are typically used to find high-quality solutions to difficult problems that cannot be solved optimally using traditional methods.
-In our case we will in particular focues on the Local Branching and Fixed Branching Mathheuristics.
+In the field of Mathematical optimization, one of the most tackled issues is the efficiency and the performance with which
+we are able to solve MIP problems. With time, both solver and the hardware have evolved to the point where we are able to solve even some large scale problems 
+in a reasonable amount of time. However, there are still some problems that are too large to be solved in a reasonable amount of time, and this is where the Mathheuristics 
+come into play. Mathheuristics are a combination of mathematical optimization techniques and heuristics that are used to improve the efficiency and performance of 
+already existing mathematical optimization algorithms.\cite{Fischetti2003LocalBranching}\cite{Fischetti2016Matheuristics} 
+In this section we will go over the implementation of the following Mathheuristics:
+\begin{itemize}
+	\item \textbf{Hard Fixing}
+	\item \textbf{Local Branching}
+\end{itemize}
 
 \subsection{Local Branching}
+
 The idea behind Local Branching is to optimize the solution search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
 This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution.
 The implementation involves selecting a set of variables, representing the edges of the tour, 
 
 
 \subsection{Fixed Branching}
-
+The Fixed Branching mathheuristcs was designed to be applied into a 
+The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
+This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution. 
 
 \newpage
 

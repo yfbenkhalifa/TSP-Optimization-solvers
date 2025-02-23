@@ -146,7 +146,7 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
         if (iterations_without_improvement > max_iterations_without_improvement
             && max_iterations_without_improvement >= 0) stop_condition = true;
     }
-    while (!is_tsp_solution(instance, solution) || !stop_condition);
+    while (!is_tsp_solution(instance, solution) && !stop_condition);
 
     instance->best_cost_value = best_incumbent_cost;
     instance->elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
@@ -253,30 +253,81 @@ int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double 
 int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid)
 {
     int error = 0;
+    clock_t start_time = clock();
+
     CPXENVptr env = CPXopenCPLEX(&error);
     if (error) print_error("CPXopenCPLEX() error");
     CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
     if (error) print_error("CPXcreateprob() error");
+
+    // Parameters initialization
     double lower_bound = -CPX_INFBOUND;
     double upper_bound = CPX_INFBOUND;
+    int ncols = instance->ncols;
+    double best_incumbent_cost = CPX_INFBOUND;
+    int iteration_count = 0;
 
+    // CPLEX parameters
     CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
     if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
     CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 1);
     CPXsetdblparam(env, CPX_PARAM_TILIM, 36000);
     CPXsetintparam(env, CPX_PARAM_CUTUP, upper_bound);
 
+    // Build initial model
     build_model(instance, env, lp);
+
+    // Set callback function
     if (contextid == NULL) contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
-    if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance)) print_error("CPXcallbacksetfunc() error");
+    if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance))
+        print_error("CPXcallbacksetfunc() error");
+
+    // Allocate memory for solution tracking
+    double* xstar = (double*)calloc(ncols, sizeof(double));
+    int* component_map = (int*)calloc(instance->nnodes, sizeof(int));
+    int* ncomp = NULL;
+    bool stop_condition = false;
+    int iterations_without_improvement = 0;
+    int max_iterations_without_improvement = 10;
+    int max_iterations = 1000;
+    do
+    {
+        log_message(LOG_LEVEL_INFO, "CPLEX iteration %d\n", iteration_count);
+        int max_iterations = 1000;
+        if (iteration_count > max_iterations && max_iterations >= 0) stop_condition = true;
+
+        xstar = TSPopt(instance, env, lp);
+        init_data_struct(instance, &component_map, &solution, &ncomp);
+        build_solution(xstar, instance, solution, component_map, ncomp);
+        double current_incumbent_cost = compute_solution_cost(instance, solution);
+
+        if (current_incumbent_cost < best_incumbent_cost)
+        {
+            best_incumbent_cost = current_incumbent_cost;
+        }else
+        {
+            iterations_without_improvement++;
+        }
+
+        if (max_iterations >=0 ) iteration_count++;
+
+        if (iterations_without_improvement > max_iterations_without_improvement
+            && max_iterations_without_improvement >= 0) stop_condition = true;
+
+    }while (!is_tsp_solution(instance, solution) && !stop_condition);
+
+    instance->best_cost_value = best_incumbent_cost;
+    instance->elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
 
 
-    error = CPXmipopt(env, lp);
+    log_message(LOG_LEVEL_INFO, "TSP solution time: %f seconds\n", instance->elapsed_time);
+    log_message(LOG_LEVEL_INFO, "TSP solution cost: %f\n", instance->best_cost_value);
+    log_message(LOG_LEVEL_INFO, "Iteration count: %d\n", iteration_count);
 
-    CPXgetobjval(env, lp, &upper_bound);
-    CPXgetbestobjval(env, lp, &lower_bound);
-
-    instance->best_cost_value = compute_solution_cost(instance, solution);
+    free(component_map);
+    free(xstar);
+    CPXfreeprob(env, &lp);
+    CPXcloseCPLEX(&env);
 
     return error;
 }
