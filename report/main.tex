@@ -573,7 +573,7 @@ In the field of Mathematical optimization, one of the most tackled issues is the
 we are able to solve MIP problems. With time, both solver and the hardware have evolved to the point where we are able to solve even some large scale problems 
 in a reasonable amount of time. However, there are still some problems that are too large to be solved in a reasonable amount of time, and this is where the Mathheuristics 
 come into play. Mathheuristics are a combination of mathematical optimization techniques and heuristics that are used to improve the efficiency and performance of 
-already existing mathematical optimization algorithms.\cite{Fischetti2003LocalBranching}\cite{Fischetti2016Matheuristics} 
+already existing mathematical optimization algorithms.\cite{Fischetti2003LocalBranching}\cite{Fischetti2016Matheuristics} \\
 In this section we will go over the implementation of the following Mathheuristics:
 \begin{itemize}
 	\item \textbf{Hard Fixing}
@@ -702,9 +702,37 @@ The idea behind Local Branching is to optimize the solution search by adding a s
 This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution.
 The implementation involves selecting a set of variables, representing the edges of the tour, 
 
+\subsection{Local Branching}
+As for the Hard fixing heuristic, the Local branching algorihtm is meant to be used with a heuristic black TSP solver to optimize its performance.
+The goal of the Local Branching algorithm is to reduce the solution search space the black solver has to explore by "branching" from a given TSP solution $\bar{x}$ to a restricted neighborhood of $\bar{x}$.
+The neighborhood is defined analougously to what we did with the VNS or the Tabu Search algorithm, where we adopted the idea of the \textit{k-opt Neighbourhood}: we therefore need to set a hyperparameter $k$
+that determines the size of our neighborhood\cite{Fischetti2003LocalBranching}
 
+\paragraph{Algorithm}
+Starting from a given solution $\hat{x}$, we add the following constraints to the model:
+\begin{equation}
+	\Delta(x , \hat{x}) := \sum_{j \in \mathcal{S}} (1 - x_j) + \sum_{j \in \mathcal{B} \setminus \mathcal{S}} x_j \leq k
+	\label{eq:local_branching_constraint}
+\end{equation} 
+where $\mathcal{B}$ is the index set of the binary variables, and $\mathcal{S} := \{ j \in \mathcal{B} : \hat{x}_j = 1\}$\cite{Fischetti2003LocalBranching}.  
+At each iteration, we then compute the set $\mathcal{S}$ we then compute \ref{eq:local_branching_constraint}, add it to the model and solve the model.
+If the solution is feasible, we update the best solution found and repeat the process until a stopping criterion is met.
 
-
+\paragraph{Implementation}
+As for all the other heuristics we will be using CPLEX as our black box solver. 
+The implementation is quite straightforward:
+\begin{enumerate}
+	\item \textbf{Setup}: Initialize the CPLEX environment and the TSP instance data structure.
+	\item \textbf{Modeling}: Create and build the TSP CPLEX model.
+	\item \textbf{Main Loop}: Repeat the following steps until a stopping criterion is met:
+	      \begin{itemize}
+				\item Run the solver to compute the solution (or start from a given valid TSP solution if its the first iteration).
+				\item Compute the set $\mathcal{S}$ and the constraint \ref{eq:local_branching_constraint}.
+				\item Add the constraint to the model and solve the model.
+				\item If the solution is feasible and better than the best solution found, update the best solution.
+				\item Repeat the process until a stopping criterion is met.
+	      \end{itemize}
+\end{enumerate}
 \newpage
 
 \bibliographystyle{alpha}
