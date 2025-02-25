@@ -580,17 +580,130 @@ In this section we will go over the implementation of the following Mathheuristi
 	\item \textbf{Local Branching}
 \end{itemize}
 
-\subsection{Local Branching}
+Mathheuristics algorithms are meant ot be used in concatenation with a "black box" solver, meaning that these algorithms are not directly implemented directly into the solver, but thery are 
+applied onto the input instance that is about to be fed into the solver. The idea is to improve the overall performance of the solver by optimizing the search space for solver to explore.\cite{Fischetti2016Matheuristics}
 
+\subsection{Fixed Branching}
+The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
+This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution. 
+
+\subparagraph{Implementation}
+The algorithm is implemented using the CPLEX Callback functionality, which allows us to add constraints to the model during the optimization process. Every time a new integer feasible solution is found, the callback function is called, 
+and we can add constraints to the model to restrict the search space. 
+In the callback function, the cplex\_hard\_fixing function is called, which fixes a subset of variables in the model based on a given probability p\_fix.
+
+The function does the following:
+\begin{enumerate}
+	\item \textbf{Update incumbent}: Get the current solution from the callback context
+	\begin{lstlisting}
+		int error = CPXcallbackgetcandidatepoint(context, xstar, 0, ncols - 1, NULL);
+	\end{lstlisting}
+	\item \textbf{Restore to original instance}: Reset the bounds of all variables to their original values (0.0 to 1.0).
+	\begin{lstlisting}
+		
+	\end{lstlisting}
+	\item Fix a subset of variables based on the given probability p\_fix.
+	\item Apply the fixing by adding constraints to the model.
+\end{enumerate}
+
+\begin{lstlisting}
+int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double p_fix)
+{
+    int ncols = instance->ncols;
+    double* xstar = (double*)calloc(ncols, sizeof(double));
+    int* indices = (int*)calloc(ncols, sizeof(int));
+    double* bd = (double*)calloc(ncols, sizeof(double));
+    char* lu = (char*)calloc(ncols, sizeof(char));
+
+    // Initialize random seed
+    srand(time(NULL));
+
+    // Get the current solution
+    int error = CPXcallbackgetcandidatepoint(context, xstar, 0, ncols - 1, NULL);
+    if (error)
+    {
+        free(xstar);
+        free(indices);
+        free(bd);
+        free(lu);
+        return error;
+    }
+
+    // Reset the bounds of all variables to their original values (0.0 to 1.0)
+    for (int i = 0; i < ncols; i++)
+    {
+        indices[i] = i;
+        lu[i] = 'B'; // Both lower and upper bounds
+        bd[i] = 0.0; // Lower bound
+    }
+    error = CPXcallbackpostheursoln(context, ncols, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
+    if (error)
+    {
+        free(xstar);
+        free(indices);
+        free(bd);
+        free(lu);
+        return error;
+    }
+
+    for (int i = 0; i < ncols; i++)
+    {
+        bd[i] = 1.0; // Upper bound
+    }
+
+    error = CPXcallbackpostheursoln(context, ncols, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
+    if (error)
+    {
+        free(xstar);
+        free(indices);
+        free(bd);
+        free(lu);
+        return error;
+    }
+
+    // Fix a subset of variables based on the given probability
+    int fix_count = 0;
+    for (int i = 0; i < ncols; i++)
+    {
+        if (((double)rand() / RAND_MAX) < p_fix)
+        {
+            indices[fix_count] = i;
+            lu[fix_count] = 'L'; // Only lower bound
+            bd[fix_count] = 1.0; // Fix to 1
+            fix_count++;
+        }
+    }
+
+    // Apply the fixing
+    if (fix_count > 0)
+    {
+        error = CPXcallbackpostheursoln(context, fix_count, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
+        if (error)
+        {
+            free(xstar);
+            free(indices);
+            free(bd);
+            free(lu);
+            return error;
+        }
+    }
+
+    free(xstar);
+    free(indices);
+    free(bd);
+    free(lu);
+    return error;
+}
+\end{lstlisting}
+
+
+\subsection{Local Branching}
 The idea behind Local Branching is to optimize the solution search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
 This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution.
 The implementation involves selecting a set of variables, representing the edges of the tour, 
 
 
-\subsection{Fixed Branching}
-The Fixed Branching mathheuristcs was designed to be applied into a 
-The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
-This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution. 
+
 
 \newpage
 
