@@ -733,6 +733,16 @@ The implementation is quite straightforward:
 				\item Repeat the process until a stopping criterion is met.
 	      \end{itemize}
 \end{enumerate}
+\subparagraph{Note}
+The \ref{eq:local_branching_constraint} in CPLEX needs to be expressed using a particular form: we need to express the constraint
+to be expressed as an inequality of the form $Ax \leq b$, where $A$ is a matrix of coefficients, $x$ is the vector of variables and $b$ is the right-hand side of the inequality.
+In our case, we can express the constraint as follows:
+\begin{align}
+	& \sum_{j \in \mathcal{S}} (1 - x_j) \leq k \\
+	\Rightarrow & \sum_{j \in \mathcal{S}}1 -\sum_{j \in \mathcal{S}} x_j \leq k' \\
+	\Rightarrow & -\sum_{j \in \hat{\mathcal{S}}} x_j \leq k' - \sum_{j \in \mathcal{S}}1 \\
+	\Rightarrow & \sum_{j \in \mathcal{S}} x_j \geq |\mathcal{S}| - k'
+\end{align}
 \newpage
 
 \bibliographystyle{alpha}

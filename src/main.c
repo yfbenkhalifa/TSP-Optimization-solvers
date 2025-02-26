@@ -77,6 +77,8 @@ int main(int argc, char *argv[]) {
         system("gnuplot ./gnuplot_commands.txt");
     }
 
+    print_solution(&inst, solution);
+
     free(solution);
     return 0;
 }

@@ -9,6 +9,15 @@
 #define EPS 1e-5
 int VERBOSE = 10000;
 
+void print_cplex_model(CPXENVptr env, CPXLPptr lp, const char* filename) {
+    int status = CPXwriteprob(env, lp, filename, NULL);
+    if (status) {
+        fprintf(stderr, "Failed to write CPLEX model to file: %s\n", filename);
+    } else {
+        printf("CPLEX model written to file: %s\n", filename);
+    }
+}
+
 
 void build_model(instance* inst, CPXENVptr env, CPXLPptr lp)
 {
@@ -111,7 +120,7 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
     bool stop_condition = false;
     int iteration_count = 0;
     int iterations_without_improvement = 0;
-    int max_iterations_without_improvement = 10;
+    int max_iterations_without_improvement = -1;
     double start_time = clock();
     double best_incumbent_cost = CPX_INFBOUND;
     do
@@ -133,7 +142,8 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
         if (current_incumbent_cost < best_incumbent_cost)
         {
             best_incumbent_cost = current_incumbent_cost;
-        }else
+        }
+        else
         {
             iterations_without_improvement++;
         }
@@ -141,12 +151,13 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
         error = add_bender_constraint(env, lp, NULL, component_map, instance, *ncomp);
 
 
-        if (max_iterations >=0 ) iteration_count++;
+        if (max_iterations >= 0) iteration_count++;
 
         if (iterations_without_improvement > max_iterations_without_improvement
-            && max_iterations_without_improvement >= 0) stop_condition = true;
+            && max_iterations_without_improvement >= 0)
+            stop_condition = true;
     }
-    while (!is_tsp_solution(instance, solution) && !stop_condition);
+    while (!is_tsp_solution(instance, solution));
 
     instance->best_cost_value = best_incumbent_cost;
     instance->elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
@@ -154,6 +165,8 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
     log_message(LOG_LEVEL_INFO, "TSP solution time: %f seconds\n", instance->elapsed_time);
     log_message(LOG_LEVEL_INFO, "TSP solution cost: %f\n", instance->best_cost_value);
     log_message(LOG_LEVEL_INFO, "Iteration count: %d\n", iteration_count);
+
+    print_cplex_model(env, lp, "model_branch_and_cut.lp");
 
     free(component_map);
     free(xstar);
@@ -282,7 +295,6 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance))
         print_error("CPXcallbacksetfunc() error");
 
-    // Allocate memory for solution tracking
     double* xstar = (double*)calloc(ncols, sizeof(double));
     int* component_map = (int*)calloc(instance->nnodes, sizeof(int));
     int* ncomp = NULL;
@@ -304,17 +316,21 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
         if (current_incumbent_cost < best_incumbent_cost)
         {
             best_incumbent_cost = current_incumbent_cost;
-        }else
+        }
+        else
         {
             iterations_without_improvement++;
         }
 
-        if (max_iterations >=0 ) iteration_count++;
+        if (max_iterations >= 0) iteration_count++;
 
         if (iterations_without_improvement > max_iterations_without_improvement
-            && max_iterations_without_improvement >= 0) stop_condition = true;
+            && max_iterations_without_improvement >= 0)
+            stop_condition = true;
 
-    }while (!is_tsp_solution(instance, solution) && !stop_condition);
+        add_local_branching_constraint(instance, env, lp, xstar, 20);
+    }
+    while (!is_tsp_solution(instance, solution) && !stop_condition);
 
     instance->best_cost_value = best_incumbent_cost;
     instance->elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
@@ -324,6 +340,8 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     log_message(LOG_LEVEL_INFO, "TSP solution cost: %f\n", instance->best_cost_value);
     log_message(LOG_LEVEL_INFO, "Iteration count: %d\n", iteration_count);
 
+    print_cplex_model(env, lp, "model_callback.lp");
+
     free(component_map);
     free(xstar);
     CPXfreeprob(env, &lp);
@@ -332,29 +350,34 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     return error;
 }
 
-void add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp, int* solution, int k)
+void add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp, const double* xstar, double k)
 {
     int* index = (int*)calloc(inst->nnodes, sizeof(int));
     double* value = (double*)calloc(inst->nnodes, sizeof(double));
     double rhs = k;
-    char sense = 'L'; // 'L' for less than or equal to constraint
-
+    char sense = 'G';
+    char *rname = (char*)calloc(100, sizeof(char));
+    sprintf(rname, "local_branching_constraint");
     int non_zero_variables_count = 0;
     for (int i = 0; i < inst->nnodes; i++)
     {
         for (int j = i + 1; j < inst->nnodes; j++)
         {
-            if (solution[i] == j || solution[j] == i)
+            int var_index = get_cplex_variable_index(i, j, inst);
+            double var_value = xstar[var_index];
+            if (var_value > 0.5)
             {
-                index[non_zero_variables_count] = get_cplex_variable_index(i, j, inst);
+                index[non_zero_variables_count] = var_index;
                 value[non_zero_variables_count] = 1.0;
                 non_zero_variables_count++;
             }
         }
     }
+    rhs = non_zero_variables_count - k / 2;
 
     int izero = 0;
-    if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &rhs, &sense, &izero, index, value, NULL, NULL))
+
+    if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &rhs, &sense, &izero, index, value, NULL, &rname))
     {
         print_error("CPXaddrows(): error adding local branching constraint");
     }
