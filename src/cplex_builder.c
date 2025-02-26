@@ -157,7 +157,7 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
             && max_iterations_without_improvement >= 0)
             stop_condition = true;
     }
-    while (!is_tsp_solution(instance, solution));
+    while (!is_tsp_solution(instance, solution) || !stop_condition || *ncomp > 1);
 
     instance->best_cost_value = best_incumbent_cost;
     instance->elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
