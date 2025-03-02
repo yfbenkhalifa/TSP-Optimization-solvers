@@ -31,13 +31,13 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
     }
 
     double incumbent = CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
-    double p_fix = 0.3;
-    if (p_fix > 0)
-    {
-        error = cplex_hard_fixing(inst, context, p_fix);
-    }
+    // if ( VERBOSE >= 100 ) printf(" ... callback at node %5d thread %2d incumbent %10.2lf, candidate value %10.2lf\n", .....);
+    double p_fix = 0.0;
 
-    if ( error ) print_error("cplex_hard_fixing error");
+    if (p_fix > 0) {
+        error = cplex_hard_fixing(inst, context, 0.3);
+        if ( error ) print_error("cplex_hard_fixing error");
+    }
 
     int *component_map;
     int *succ;
@@ -71,10 +71,6 @@ int CPXPUBLIC callback_function_relaxation(CPXCALLBACKCONTEXTptr context, void *
     build_solution(xstar, inst, succ, component_map, ncomp);
     if ( *ncomp > 1)
     {
-        int izero = 0;
-        int purgeable = CPX_USECUT_FILTER;
-        int local = 0;
-
         add_bender_constraint(NULL, NULL, context, component_map, inst, *ncomp);
     }
 
