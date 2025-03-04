@@ -16,38 +16,37 @@ int CPXPUBLIC callback_driver(CPXCALLBACKCONTEXTptr context, CPXLONG contextid, 
     }
 
     return 1;
-
 }
 
 int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *userhandle) {
-    instance* inst = (instance*) userhandle;
-    double* xstar = (double*) malloc(inst->ncols * sizeof(double));
+    callback_data *data;
+    TRY_CATCH_FATAL({
+        data = (callback_data*) userhandle;
+        });
+    double *xstar = (double *) malloc(data->instance->ncols * sizeof(double));
     double objval = CPX_INFBOUND;
-    int error = CPXcallbackgetcandidatepoint(context, xstar, 0, inst->ncols-1, &objval);
-    if ( error )
-    {
+    int error = CPXcallbackgetcandidatepoint(context, xstar, 0, data->instance->ncols - 1, &objval);
+    if (error) {
         free(xstar);
         print_error("CPXcallbackgetcandidatepoint error");
     }
 
     double incumbent = CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
     // if ( VERBOSE >= 100 ) printf(" ... callback at node %5d thread %2d incumbent %10.2lf, candidate value %10.2lf\n", .....);
-    double p_fix = 0.0;
 
-    if (p_fix > 0) {
-        error = cplex_hard_fixing(inst, context, 0.3);
-        if ( error ) print_error("cplex_hard_fixing error");
+    if (data->local_branch_p_fix > 0) {
+        error = cplex_hard_fixing(data->instance, context, data->local_branch_p_fix);
+        if (error) print_error("cplex_hard_fixing error");
     }
 
     int *component_map;
     int *succ;
     int *ncomp;
-    init_data_struct(inst, &component_map, &succ, &ncomp);
-    build_solution(xstar, inst, succ, component_map, ncomp);
+    init_data_struct(data->instance, &component_map, &succ, &ncomp);
+    build_solution(xstar, data->instance, succ, component_map, ncomp);
 
-    if ( *ncomp > 1)
-    {
-        add_bender_constraint(NULL, NULL, context, component_map, inst, *ncomp);
+    if (*ncomp > 1) {
+        add_bender_constraint(NULL, NULL, context, component_map, data->instance, *ncomp);
     }
 
     free(xstar);
@@ -57,20 +56,21 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
 }
 
 int CPXPUBLIC callback_function_relaxation(CPXCALLBACKCONTEXTptr context, void *userhandle) {
-    instance* inst = (instance*) userhandle;
-    double* xstar = (double*) malloc(inst->ncols * sizeof(double));
+    instance *inst = (instance *) userhandle;
+    double *xstar = (double *) malloc(inst->ncols * sizeof(double));
     double objval = CPX_INFBOUND;
-    if ( CPXcallbackgetcandidatepoint(context, xstar, 1, inst->ncols, &objval) ) print_error("CPXcallbackgetcandidatepoint error");
+    if (CPXcallbackgetcandidatepoint(context, xstar, 1, inst->ncols, &objval)) print_error(
+        "CPXcallbackgetcandidatepoint error");
 
-    double incumbent = CPX_INFBOUND; CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
+    double incumbent = CPX_INFBOUND;
+    CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
     // if ( VERBOSE >= 100 ) printf(" ... callback at node %5d thread %2d incumbent %10.2lf, candidate value %10.2lf\n", .....);
     int *component_map;
     int *succ;
     int *ncomp;
     init_data_struct(inst, &component_map, &succ, &ncomp);
     build_solution(xstar, inst, succ, component_map, ncomp);
-    if ( *ncomp > 1)
-    {
+    if (*ncomp > 1) {
         add_bender_constraint(NULL, NULL, context, component_map, inst, *ncomp);
     }
 
@@ -79,5 +79,3 @@ int CPXPUBLIC callback_function_relaxation(CPXCALLBACKCONTEXTptr context, void *
     free(succ);
     return 0;
 }
-
-

@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define FATAL_WRAP(call) \
+#define TRY_CATCH_FATAL(call) \
 do { \
 if (!(call)) { \
 fprintf(stderr, "Fatal error: %s failed at %s:%d\n", #call, __FILE__, __LINE__); \
@@ -23,7 +23,7 @@ exit(EXIT_FAILURE); \
 } \
 } while (0)
 
-#define ERROR_WRAP(call) \
+#define TRY_CATCH_ERROR(call) \
 do { \
 if (!(call)) { \
 fprintf(stderr, "Error: %s failed at %s:%d\n", #call, __FILE__, __LINE__); \

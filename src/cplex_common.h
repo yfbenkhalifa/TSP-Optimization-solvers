@@ -14,6 +14,12 @@ typedef enum{
     CPLEX_SOLVE_CALLBACK
 }CplexSolveType;
 
+
+typedef struct {
+    instance *instance;
+    double local_branch_p_fix;
+}callback_data;
+
 void build_solution(double *xstar, instance *instance, int *succ, int *comp, int *ncomp);
 int add_bender_constraint(CPXENVptr env, CPXLPptr lp, CPXCALLBACKCONTEXTptr context, const int *component_map,
                           instance *instance, int ncomponents);

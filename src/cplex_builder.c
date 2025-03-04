@@ -9,7 +9,7 @@
 #define EPS 1e-5
 int VERBOSE = 10000;
 
-void print_cplex_model(CPXENVptr env, CPXLPptr lp, const char* filename) {
+void print_cplex_model(CPXENVptr env, CPXLPptr lp, const char *filename) {
     int status = CPXwriteprob(env, lp, filename, NULL);
     if (status) {
         fprintf(stderr, "Failed to write CPLEX model to file: %s\n", filename);
@@ -264,7 +264,18 @@ int cplex_tsp_callback(instance *instance, int *solution, int _verbose, CPXLONG 
     // Set callback function
     if (contextid == NULL) contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
 
-    if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance))
+    callback_data *cb_data;
+
+    TRY_CATCH_FATAL({
+        cb_data = (callback_data*) malloc(sizeof(callback_data));}
+    );
+
+    if (!cb_data) print_error("Failed to allocate callback data");
+
+    cb_data->instance = instance;
+    cb_data->local_branch_p_fix = 0.3; // Or whatever value you want to use
+
+    if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, cb_data))
         print_error("CPXcallbacksetfunc() error");
 
     double *xstar = ARRAY_ALLOC(ncols, sizeof(double));
@@ -297,20 +308,17 @@ int cplex_tsp_callback(instance *instance, int *solution, int _verbose, CPXLONG 
     return error;
 }
 
-void add_local_branching_constraint(instance *inst, CPXENVptr env, CPXLPptr lp, const double* xstar, double k) {
+void add_local_branching_constraint(instance *inst, CPXENVptr env, CPXLPptr lp, const double *xstar, double k) {
     int *index = (int *) calloc(inst->nnodes, sizeof(int));
     double *value = (double *) calloc(inst->nnodes, sizeof(double));
     double rhs = k;
     char sense = 'L';
+    char *rname = (char *) calloc(100, sizeof(char));
+    sprintf(rname, "local_branching_constraint");
 
     int non_zero_variables_count = 0;
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
-            if (solution[i] == j || solution[j] == i) {
-                index[non_zero_variables_count] = get_cplex_variable_index(i, j, inst);
-                value[non_zero_variables_count] = 1.0;
-                non_zero_variables_count++;
-            }
         }
     }
     rhs = non_zero_variables_count - k / 2;
