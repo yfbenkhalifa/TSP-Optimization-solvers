@@ -331,24 +331,91 @@ The extra mileage algorithm is implemented as follows:
 the code for the implementation can be found in the appendix section \ref{appendix:tsp_extra_mileage}.
 
 \subsection{Tabu Search}
-The main idea behind the Tabu search heuristic is to exclude the already explored solutions from the search space. This is done by maintaining a tabu list that stores the solutions that have been visited recently. 
-The tabu list is used to prevent the search from revisiting the same solutions, which can help the algorithm escape local optima and explore new regions of the search space.
+The Tabu search is a type of neighborhood search algorithm. These type of algorithms are base on a search strategy that explore the solution search space by applying 
+the two-opt move to the current solution. 
+Differently with what happened with greedy algorithms like the GRASP, the Tabu search algorithm is able to escape local optima by allowing the search to move to worse solutions,
+which can help the algorithm explore new regions of the search space and potentially find better solutions.
+The main idea behind the Tabu search heuristic is to exclude the already explored solutions from the search space. 
+This is done by maintaining a tabu list that stores the solutions that have been visited recently. 
+The tabu list is used to prevent the search from revisiting the same solutions, 
+which can help the algorithm escape local optima and explore new regions of the search space\cite{Heuristics_for_the_Traveling_Salesman_Problem}.
 
 \paragraph{Algorithm}
 The Tabu search algorithm can be summarized as follows:
 \begin{enumerate}
     \item \textbf{Initialization:} Initialize the tabu list and the best solution found.
+    \begin{lstlisting}
+		int** tabu_list = (int**)malloc(TABU_TENURE * sizeof(int*));
+		for (int i = 0; i < TABU_TENURE; i++)
+		{
+			tabu_list[i] = (int*)malloc(size * sizeof(int));
+		}
+		int tabu_index = 0;
+	\end{lstlisting}
     \item \textbf{Setup:} Initialize the current solution and the current iteration count.
+    \begin{lstlisting}
+		Solution best_solution;
+		best_solution.solution = (int*)malloc(size * sizeof(int));
+		memcpy(best_solution.solution, initial_solution, size * sizeof(int));
+		best_solution.cost = compute_solution_cost(inst, best_solution.solution);
+		Solution current_solution = best_solution;
+	\end{lstlisting}
     \item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
           \begin{itemize}
               \item Generate a set of candidate solutions by applying a set of moves to the current solution.
+              \begin{lstlisting}
+				int num_neighbors = size;
+				int** neighbours = (int**)malloc(num_neighbors * sizeof(int*));
+				for (int i = 0; i < num_neighbors; i++)
+				{
+					neighbours[i] = (int*)malloc(size * sizeof(int));
+				}
+				generate_neighbors(current_solution.solution, size, neighbours, num_neighbors);
+			  \end{lstlisting}
               \item Select the best candidate solution that is not in the tabu list.
+              \begin{lstlisting}
+				Solution best_neighbor;
+				best_neighbor.solution = NULL;
+				best_neighbor.cost = INT_MAX;
+
+				for (int i = 0; i < num_neighbors; i++)
+				{
+					int cost = evaluate_solution(neighbours[i], size);
+					if (cost < best_neighbor.cost && !is_tabu(neighbours[i], tabu_list, TABU_TENURE, size))
+					{
+						best_neighbor.solution = neighbours[i];
+						best_neighbor.cost = cost;
+					}
+				}
+			  \end{lstlisting}
               \item Update the tabu list with the selected solution.
+              \begin{lstlisting}
+				if (best_neighbor.solution != NULL)
+				{
+					current_solution = best_neighbor;
+					if (current_solution.cost < best_solution.cost)
+					{
+						best_solution = current_solution;
+					}
+					add_to_tabu_list(current_solution.solution, tabu_list, &tabu_index, size);
+				}
+			  \end{lstlisting}
               \item Update the current solution with the selected solution.
               \item If the selected solution is better than the best solution found, update the best solution.
               \item Increment the iteration count.
           \end{itemize}
     \item \textbf{Finalization:} Return the best solution found.
+    \begin{lstlisting}
+		inst->best_cost_value = compute_solution_cost(inst, best_solution.solution);
+		log_message(LOG_LEVEL_INFO, "Best solution cost: %d\n", best_solution.cost);
+		memcpy(inst->solution, best_solution.solution, size * sizeof(int));
+
+		clock_t end_time = clock();
+		double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+		inst->elapsed_time = elapsed_time;
+		log_message(LOG_LEVEL_INFO, "Tabu Search solution time: %f seconds\n", elapsed_time);
+		log_message(LOG_LEVEL_INFO, "Tabu Search solution cost: %f\n", best_solution.cost);
+	\end{lstlisting}
 \end{enumerate}
 
 \subsection{Variable Neighbourhood Search}
@@ -357,13 +424,23 @@ The idea is to explore different neighbourhoods of the current solution to escap
 Many formulations and version for the VNS algorithm have been proposed in the literature, such as the \textit{Basic VNS}, \textit{Reduced VNS} and \textit{General VNS}.\cite{VariableNeighborhood_Search}
 All of these forumlations are based on a neighbourhood search, which is defined within a solution space that can be explored using the \textit{two-opt move}, 
 \textit{three-opt move} or the \textit{k-opt move}, depending on the general scheme of the algorithm. These operations that can be made in the solution space for the TSP problem allow to generate a neighborhood
-starting from a given solution, each of which neighbour differ from one single \textit{k-opt move}. \cite{Heuristics_for_the_Traveling_Salesman_Problem} 
+starting from a given solution, each of which neighbour differ from one single \textit{2-opt move}\cite{Heuristics_for_the_Traveling_Salesman_Problem}. 
 
 \paragraph{Algorithm}
 In our imeplementation we will go over the General VNS scheme, in which the neighbours are simply generated from a single \textit{two-opt move}, and the \textit{shaking function} 
 The VNS algorithm can be summarized as follows:
 \begin{enumerate}
 	\item \textbf{Initialization:} Initialize the current solution and the best solution found.
+	\begin{lstlisting}
+		int* current_solution = (int*)malloc(inst->nnodes * sizeof(int));
+		memcpy(current_solution, initial_solution, inst->nnodes * sizeof(int));
+		bool stop_criterion = true;
+		int iterations_without_improvement = 0;
+		const int max_iterations = 100;
+		const int time_limit_milliseconds = 3600;
+		const int max_stuck_iterations = 10;
+		double best_solution_cost = compute_solution_cost(inst, current_solution);
+	\end{lstlisting}
 	\item \textbf{Setup:} Initialize the neighbourhood structure and the current iteration count.
 	\item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
 		  \begin{itemize}

@@ -32,7 +32,6 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
     }
 
     double incumbent = CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
-    // if ( VERBOSE >= 100 ) printf(" ... callback at node %5d thread %2d incumbent %10.2lf, candidate value %10.2lf\n", .....);
 
     if (data->hard_fixing_p_fix > 0) {
         error = cplex_hard_fixing(data->instance, context, data->hard_fixing_p_fix);
