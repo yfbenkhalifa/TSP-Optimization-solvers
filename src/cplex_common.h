@@ -17,7 +17,8 @@ typedef enum{
 
 typedef struct {
     instance *instance;
-    double local_branch_p_fix;
+    double hard_fixing_p_fix;
+    int local_branching_k;
 }callback_data;
 
 void build_solution(double *xstar, instance *instance, int *succ, int *comp, int *ncomp);

@@ -8,7 +8,7 @@ double dist(int i, int j, instance *inst) {
     double dx = inst->xcoord[i] - inst->xcoord[j];
     double dy = inst->ycoord[i] - inst->ycoord[j];
     if (!inst->integer_costs) return sqrt(dx * dx + dy * dy);
-    int dis = sqrt(dx * dx + dy * dy) + 0.499999999; // nearest integer
+    int dis = sqrt(dx * dx + dy * dy) + 0.499999999;
     return dis + 0.0;
 }
 

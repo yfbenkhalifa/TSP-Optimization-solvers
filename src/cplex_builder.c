@@ -273,7 +273,7 @@ int cplex_tsp_callback(instance *instance, int *solution, int _verbose, CPXLONG 
     if (!cb_data) print_error("Failed to allocate callback data");
 
     cb_data->instance = instance;
-    cb_data->local_branch_p_fix = 0.3; // Or whatever value you want to use
+    cb_data->hard_fixing_p_fix = 0.3; // Or whatever value you want to use
 
     if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, cb_data))
         print_error("CPXcallbacksetfunc() error");
@@ -308,26 +308,30 @@ int cplex_tsp_callback(instance *instance, int *solution, int _verbose, CPXLONG 
     return error;
 }
 
-void add_local_branching_constraint(instance *inst, CPXENVptr env, CPXLPptr lp, const double *xstar, double k) {
+void add_local_branching_constraint(instance *inst, CPXCALLBACKCONTEXTptr context, const double *xstar, double k) {
     int *index = (int *) calloc(inst->nnodes, sizeof(int));
     double *value = (double *) calloc(inst->nnodes, sizeof(double));
     double rhs = k;
-    char sense = 'L';
+    char constraint_sense = 'L';
+    int izero = 0;
     char *rname = (char *) calloc(100, sizeof(char));
     sprintf(rname, "local_branching_constraint");
 
     int non_zero_variables_count = 0;
     for (int i = 0; i < inst->nnodes; i++) {
         for (int j = i + 1; j < inst->nnodes; j++) {
+            int var_index = get_cplex_variable_index(i, j, inst);
+            if (xstar[var_index] > 0.5) {
+                index[non_zero_variables_count] = var_index;
+                value[non_zero_variables_count] = 1.0;
+                non_zero_variables_count++;
+            }
         }
     }
     rhs = non_zero_variables_count - k / 2;
 
-    int izero = 0;
-
-    if (CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &rhs, &sense, &izero, index, value, NULL, &rname)) {
-        print_error("CPXaddrows(): error adding local branching constraint");
-    }
+    TRY_CATCH_ERROR(CPXcallbackrejectcandidate(context, 1, non_zero_variables_count, &rhs,
+                                           &constraint_sense, &izero, index, value));
 
     free(index);
     free(value);
