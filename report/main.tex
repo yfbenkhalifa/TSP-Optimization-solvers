@@ -567,6 +567,7 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 
 \subsection{Patching Heuristic}
 
+\newpage
 
 \section{Mathheuristics}
 In the field of Mathematical optimization, one of the most tackled issues is the efficiency and the performance with which
@@ -583,9 +584,26 @@ In this section we will go over the implementation of the following Mathheuristi
 Mathheuristics algorithms are meant ot be used in concatenation with a "black box" solver, meaning that these algorithms are not directly implemented directly into the solver, but thery are 
 applied onto the input instance that is about to be fed into the solver. The idea is to improve the overall performance of the solver by optimizing the search space for solver to explore.\cite{Fischetti2016Matheuristics}
 
-\subsection{Fixed Branching}
-The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
-This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution. 
+\subsection{Hard Fixing Mathheuristic}
+The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the 
+search space to a local region around the current solution. These constraints are designed to select a random subset of edges in the current solution, 
+so as to create a restricted neighborhood of feasible solutions. 
+This allows the solver to explore a smaller search space and potentially find better solutions faster. 
+
+\subparagraph{Algorithm}
+The Hard Fixing algorithm can be summarized as follows: 
+\begin{enumerate}
+	\item fix a small random probability $\rho \in (0, 1)$ (i.e. for the implementation we went for $\rho = 0.3$);
+	\item extract the subset of edges to be fixed based on the probability $\rho$: these edges are again selected at random from the subset of edges that are not selected in the current solution;
+	\begin{equation}
+		\bar{\mathcal{S}} = \{ (i, j) \in \mathcal{S} : (i, j) = 0, |\bar{\mathcal{S}}| = \rho |\mathcal{B}|\}
+	\end{equation}
+	where $\mathcal{S} \subseteq \mathcal{B}$ and $\mathcal{B}$ is the set of binary variables. 
+	To put it in words, we want to select a subset of edges that are not selected in the current solution, and we want to fix them to 1 with a probability $\rho$.
+	\item add constraints to the model to fix the selected subset of edges to 1.
+\end{enumerate}
+This process is repeated every time a new integer feasible solution is found, and the constraints are added to the model to restrict the search space. It is implicitly 
+understood that the local branching constraints are reset at every iteration of the algorithm. 
 
 \subparagraph{Implementation}
 The algorithm is implemented using the CPLEX Callback functionality, which allows us to add constraints to the model during the optimization process. Every time a new integer feasible solution is found, the callback function is called, 
@@ -697,16 +715,12 @@ int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double 
 \end{lstlisting}
 
 
-\subsection{Local Branching}
-The idea behind Local Branching is to optimize the solution search by adding a set of constraints to the model that restrict the search space to a local region around the current solution.
-This is done by adding a set of constraints that limit the number of variables that can change from their current values in the solution.
-The implementation involves selecting a set of variables, representing the edges of the tour, 
 
 \subsection{Local Branching}
 As for the Hard fixing heuristic, the Local branching algorihtm is meant to be used with a heuristic black TSP solver to optimize its performance.
 The goal of the Local Branching algorithm is to reduce the solution search space the black solver has to explore by "branching" from a given TSP solution $\bar{x}$ to a restricted neighborhood of $\bar{x}$.
 The neighborhood is defined analougously to what we did with the VNS or the Tabu Search algorithm, where we adopted the idea of the \textit{k-opt Neighbourhood}: we therefore need to set a hyperparameter $k$
-that determines the size of our neighborhood\cite{Fischetti2003LocalBranching}
+that determines the size of our neighborhood\cite{Fischetti2003LocalBranching}.
 
 \paragraph{Algorithm}
 Starting from a given solution $\hat{x}$, we add the following constraints to the model:
