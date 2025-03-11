@@ -311,12 +311,13 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     if (!cb_data) print_error("Failed to allocate callback data");
 
     cb_data->instance = instance;
-    cb_data->local_branch_p_fix = 0.3; // Or whatever value you want to use
+    cb_data->hard_fixing_p_fix = 0.3;
+    cb_data->local_branching_k = 10;
 
     if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, cb_data))
         print_error("CPXcallbacksetfunc() error");
 
-    double* xstar = ARRAY_ALLOC(ncols, sizeof(double));
+    double* xstar = ARRAY_ALLOC(instance->ncols, sizeof(double));
     int* component_map = ARRAY_ALLOC(instance->nnodes, sizeof(int));
     int* succ;
     int* ncomp = NULL;
@@ -372,34 +373,42 @@ int add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp,
     right_hand_side_value = inst->nnodes - k;
 
     int izero = 0;
+    int row_index = -1;
     if (cpxcallbackcontex_tptr != NULL)
     {
-        TRY_CATCH_ERROR(
-            {
-            CPXcallbackrejectcandidate(cpxcallbackcontex_tptr, 1, non_zero_variables_count, &right_hand_side_value,
-                &constraint_sense, &izero, index, coefficients);
-            }
-        );
-        free(index);
-        free(coefficients);
-        return;
+        int error = CPXcallbackrejectcandidate(cpxcallbackcontex_tptr, 1, non_zero_variables_count,
+                                               &right_hand_side_value,
+                                               &constraint_sense, &izero, index, coefficients);
+        if (error)
+        {
+            log_message(LOG_LEVEL_ERROR, "CPXcallbackrejectcandidate error %d\n", error);
+        }
+
     }
-    int error = CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense, &izero,
-                           index,
-                           coefficients, NULL, &rname);
-    if (error)
+    else if (env != NULL && lp != NULL)
     {
-        log_message(LOG_LEVEL_ERROR, "CPXcallbackrejectcandidate error %d\n", error);
+        int error = CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense,
+                               &izero,
+                               index,
+                               coefficients, NULL, &rname);
+        if (error)
+        {
+            log_message(LOG_LEVEL_ERROR, "CPXcallbackrejectcandidate error %d\n", error);
+        }else
+        {
+            row_index = CPXgetnumrows(env, lp) - 1;
+        }
+
     }
+    else
+    {
+        log_message(LOG_LEVEL_ERROR,
+                    "At least one between the CPLEX Callback context or the CPLEX Environment must be specified");
+        log_message(LOG_LEVEL_WARNING, "No constraint could be added");
+    }
+
     free(index);
     free(coefficients);
 
-    int row_index = -1;
-    if (cpxcallbackcontex_tptr == NULL)
-    {
-        // Store the index of the added row for later removal
-        row_index = CPXgetnumrows(env, lp) - 1;
-    }
-
-    return row_index; // Return the index for later removal
+    return row_index;
 }

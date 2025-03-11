@@ -33,15 +33,6 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
 
     double incumbent = CPXcallbackgetinfodbl(context, CPXCALLBACKINFO_BEST_SOL, &incumbent);
 
-    if (data->hard_fixing_p_fix > 0) {
-        error = cplex_hard_fixing(data->instance, context, data->hard_fixing_p_fix);
-        if (error) print_error("cplex_hard_fixing error");
-    }
-
-    if (data->local_branching_k > 0) {
-        add_local_branching_constraint(data->instance, context, xstar, data->local_branching_k);
-    }
-
     int *component_map;
     int *succ;
     int *ncomp;
@@ -50,6 +41,15 @@ int CPXPUBLIC callback_function_candidate(CPXCALLBACKCONTEXTptr context, void *u
 
     if (*ncomp > 1) {
         add_bender_constraint(NULL, NULL, context, component_map, data->instance, *ncomp);
+    }
+
+    if (data->hard_fixing_p_fix > 0) {
+        error = cplex_hard_fixing(data->instance, context, data->hard_fixing_p_fix);
+        if (error) print_error("cplex_hard_fixing error");
+    }
+
+    if (data->local_branching_k > 0) {
+        add_local_branching_constraint(data->instance, NULL, NULL, context, xstar, data->local_branching_k);
     }
 
     free(xstar);

@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 
     int VERBOSE = 10000;
     instance inst;
-    int error;
 
     strcpy(inst.input_file, tsp_file);
     read_input(&inst);
