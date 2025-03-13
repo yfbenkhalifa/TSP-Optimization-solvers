@@ -127,7 +127,6 @@ void tsp_grasp(instance* inst, int starting_node)
     inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
     inst->best_cost_value = 0;
 
-    // Initialize solution
     for (int i = 0; i < inst->nnodes; i++)
     {
         inst->solution[i] = -1;

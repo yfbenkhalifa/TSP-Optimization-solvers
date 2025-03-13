@@ -10,6 +10,13 @@
 #include "tsp.h"
 #include "tsp_common.h"
 
+typedef struct {
+    char *instance_name;
+    char **methods;
+    double **costs;
+    int methods_count;
+    int instances_count;
+} profiler_run;
 
 typedef enum {
     LOG_LEVEL_ERROR,

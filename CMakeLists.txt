@@ -25,10 +25,6 @@ add_library(or2_project_lib
         ${HEADER_FILES}
         src/cplex_builder.c
         src/cplex_builder.h
-)
-target_include_directories(or2_project_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_executable(or2_project src/main.c
         src/utils.c
         src/tsp.c
         ${HEADER_FILES}
@@ -42,10 +38,13 @@ add_executable(or2_project src/main.c
         src/cplex_common.c
         src/cplex_common.h
         src/common.c
-
 )
+target_include_directories(or2_project_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_executable(main src/main.c)
+target_link_libraries(main or2_project_lib cplex m pthread dl)
 
-# Link the executable with the CPLEX library
-target_link_libraries(or2_project cplex m pthread dl)
+add_executable(benchmark src/benchmark.c)
+target_link_libraries(benchmark or2_project_lib cplex m pthread dl)
+
 add_subdirectory(tests)

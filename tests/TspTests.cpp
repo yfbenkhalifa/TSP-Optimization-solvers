@@ -131,19 +131,11 @@ TEST(TspTests, Is2OptNeighbour) {
 TEST(TspTests, TabuSearchTest) {
     instance inst = read_instance();
     int solution[inst.nnodes];
-
-    // Initialize the solution with a starting point, e.g., a greedy solution
     tsp_grasp(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double greedy_final_cost = compute_solution_cost(&inst, solution);
-
-    // Run Tabu Search
     tabu_search(&inst, solution, inst.nnodes);
-
-    // Update the instance with the new solution
     memcpy(inst.solution, solution, inst.nnodes * sizeof(int));
-
-    // Assertions
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     double final_cost = compute_solution_cost(&inst, solution);
@@ -154,19 +146,11 @@ TEST(TspTests, TabuSearchTest) {
 TEST(TspTests, VnsTest) {
     instance inst = read_instance();
     int solution[inst.nnodes];
-
-    // Initialize the solution with a starting point, e.g., a greedy solution
     tsp_grasp(&inst, 0);
     memcpy(solution, inst.solution, inst.nnodes * sizeof(int));
     double greedy_final_cost = compute_solution_cost(&inst, solution);
-
-    // Run Tabu Search
     tsp_vns(&inst, solution, 5);
-
-    // Update the instance with the new solution
     memcpy(inst.solution, solution, inst.nnodes * sizeof(int));
-
-    // Assertions
     EXPECT_EQ(sizeof(solution) / sizeof(solution[0]), inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution), true);
     double final_cost = compute_solution_cost(&inst, solution);
