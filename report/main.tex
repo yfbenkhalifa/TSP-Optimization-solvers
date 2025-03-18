@@ -51,10 +51,40 @@
 \maketitle
 
 \section{Introduction}
-
 In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the CPLEX optimization LP optimization framework.
+The goal is to research and implement the most common Metaheuristics and Mathheuristics for solving the TSP problem using MIP problems 
+The work done is subdivided into two main categories:
+\begin{enumerate}
+	\item \textbf{Heuristics}: Implementation of common heuristic algorithms including:
+		\begin{itemize}
+			\item Greedy Randomized Adaptive Search (GRASP)
+			\item Extra Mileage
+			\item Tabu Search
+			\item Variable Neighborhood Search (VNS)
+		\end{itemize}
+	\item \textbf{Mathheuristics}: Implementation of mathematical optimization techniques combined with heuristics:
+		\begin{itemize}
+			\item Hard Fixing
+			\item Local Branching
+		\end{itemize}
+\end{enumerate}
+
+For each algorithm, we will examine the implementation details, mathematical foundations, and effectiveness in solving the TSP problem. 
+The implementations for the mathheuristic algorithms are done utilizing the CPLEX optimization framework. 
+
+The thesis is organized as follows:
+\begin{itemize}
+	\item First, we present the mathematical formulation of the TSP problem and the data structures used
+	\item Next, we discuss each heuristic algorithm implementation in detail
+	\item Then, we explore the integration with CPLEX and mathheuristic approaches
+	\item Finally, we analyze the performance and effectiveness of each method
+\end{itemize}
+ 
 \subsection{The Traveling Salesman Problem}
-The Traveling Salesman Problem is among the most disucssed and researched problems in the field of Operations Research.
+The Traveling Salesman Problem (TSP) is one of the most extensively studied problems in combinatorial optimization. The problem asks to find the shortest possible route that visits each city exactly once and returns to the origin city, 
+given a set of cities and the distances between them.
+Formally, given a set of n cities and a cost matrix [cij] that specifies the cost (or distance) of traveling from city i to city j, the goal is to find a permutation of the cities that minimizes the total tour length. 
+Despite its simple description, the TSP is NP-hard, meaning there is no known polynomial-time algorithm that can solve it optimally for large instances.
 
 \paragraph{Mathematical Formulation}
 The TSP can be formulated as an optimization problem as follows:
@@ -77,6 +107,12 @@ subject to:
 \begin{equation}
 	u_i \in \mathit{text} \quad \forall i \in \{1, \ldots, n\}
 \end{equation}
+where:
+\begin{itemize}
+	\item $c_{ij}$ is the cost of traveling from node $i$ to node $j$.
+	\item $x_{ij}$ is a binary variable that indicates whether the salesman travels from node $i$ to node $j$.
+	\item $u_i$ is a continuous variable that represents the position of node $i$ in the tour.
+\end{itemize}
 
 
 \section{TSP data structure}
@@ -91,7 +127,9 @@ The code for the data structures implementation can be found in the appendinx se
 
 The cost functio used is the euclidean distance between two nodes in the graph.
 The code for the implementation can be found in the appendix section \ref{appendix:euclidean_distance}.
+
 \section{TSP Heurisitcs}
+
 \subsection{Greedy Randomized Adaptive Search (GRASP)}
 The GRASP method is basically a greedy randomized adaptive search procedure.
 It consists of two main phases: construction and local search.
@@ -330,6 +368,25 @@ The extra mileage algorithm is implemented as follows:
 \end{enumerate}
 the code for the implementation can be found in the appendix section \ref{appendix:tsp_extra_mileage}.
 
+\subsection{Refining Heuristics}
+Refining heuristics are a type of heuristic algorithm that iteratively improve an initial solution by applying a series of local search moves. These can be applied on top of the existing heuristics we have 
+introduced so far in order to improve their performance. In the next section we will go over a one particular refining heuristic called the \textit{2-opt move}\cite{Heuristics_for_the_Traveling_Salesman_Problem}.
+
+\subsubsection{2-opt Move}
+Assume we have a graph $G = (V, E)$ and a directed tour $T \subseteq E$, valid as a tsp solution, the 2-opt move takes two edges in that tour and swaps the nodes between them. 
+In particular, let $(i, j), (h, k) \in T$, the 2-opt move replaces the edges $(i, j)$ and $(h, k)$ with the edges $(i, h)$ and $(j, k)$. \\
+The goal of this type of operation is to swap two "longer" edges for two "shorter" ones (by "longer" and "shorter" we refer to the edge cost): 
+therefore in our refining heuristic we aim at:
+\begin{enumerate}
+	\item Selecting two edges $(i, j), (h, k) \in T$ such that either:
+	\begin{itemize}
+		\item $c_{ij} + c_{hk} > c_{ih} + c_{jk}$
+		\item $\Delta((i, j) , (h, k)) = C_T()$
+	\end{itemize}
+	\item Replacing the two edges with the edges $(i, h)$ and $(j, k)$.
+\end{enumerate}
+\section{Neighbourhood Search Heauristics}
+
 \subsection{Tabu Search}
 The Tabu search is a type of neighborhood search algorithm. These type of algorithms are base on a search strategy that explore the solution search space by applying 
 the two-opt move to the current solution. 
@@ -421,7 +478,8 @@ The Tabu search algorithm can be summarized as follows:
 \subsection{Variable Neighbourhood Search}
 The Variable Neighbourhood Search (VNS) heuristic is a metaheuristic that combines local search with a systematic change of neighbourhood structures. 
 The idea is to explore different neighbourhoods of the current solution to escape local optima and find better solutions.
-Many formulations and version for the VNS algorithm have been proposed in the literature, such as the \textit{Basic VNS}, \textit{Reduced VNS} and \textit{General VNS}.\cite{VariableNeighborhood_Search}
+Many formulations and version for the VNS algorithm have been proposed in the literature, such as the \textit{Basic VNS}, \textit{Reduced VNS} and \textit{General VNS}.\cite{VariableNeighborhood_Search}\\
+
 All of these forumlations are based on a neighbourhood search, which is defined within a solution space that can be explored using the \textit{two-opt move}, 
 \textit{three-opt move} or the \textit{k-opt move}, depending on the general scheme of the algorithm. These operations that can be made in the solution space for the TSP problem allow to generate a neighborhood
 starting from a given solution, each of which neighbour differ from one single \textit{2-opt move}\cite{Heuristics_for_the_Traveling_Salesman_Problem}. 
@@ -810,20 +868,47 @@ At each iteration, we then compute the set $\mathcal{S}$ we then compute \ref{eq
 If the solution is feasible, we update the best solution found and repeat the process until a stopping criterion is met.
 
 \paragraph{Implementation}
-As for all the other heuristics we will be using CPLEX as our black box solver. 
-The implementation is quite straightforward:
+Starting from a given solution $\bar{x}$, and given the starting tsp instance, the Cplex programming environment and pointer, as shown in the function declaration below:
+\begin{lstlisting}
+	int add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp,CPXCALLBACKCONTEXTptr cpxcallbackcontex_tptr, const double* xstar, double k)
+\end{lstlisting} 
+we proceed with the floowing steps:
 \begin{enumerate}
-	\item \textbf{Setup}: Initialize the CPLEX environment and the TSP instance data structure.
-	\item \textbf{Modeling}: Create and build the TSP CPLEX model.
-	\item \textbf{Main Loop}: Repeat the following steps until a stopping criterion is met:
-	      \begin{itemize}
-				\item Run the solver to compute the solution (or start from a given valid TSP solution if its the first iteration).
-				\item Compute the set $\mathcal{S}$ and the constraint \ref{eq:local_branching_constraint}.
-				\item Add the constraint to the model and solve the model.
-				\item If the solution is feasible and better than the best solution found, update the best solution.
-				\item Repeat the process until a stopping criterion is met.
-	      \end{itemize}
+	\item \textbf{Constraint Modeling}: Starting from the given solution vector $xstar$, we build the constraint the will be later added to the CPLEX model.
+	\begin{lstlisting}
+		int ncols = CPXgetnumcols(env, lp);
+		int* index = (int*)calloc(ncols, sizeof(int));
+		double* coefficients = (double*)calloc(ncols, sizeof(double));
+		double right_hand_side_value = k;
+		char constraint_sense = 'G';
+		char* rname = (char*)calloc(100, sizeof(char));
+		sprintf(rname, "local_branching_constraint");
+
+		int non_zero_variables_count = 0;
+		for (int i = 0; i < ncols; i++)
+		{
+			if (xstar[i] > 0.8)
+			{
+				index[non_zero_variables_count] = i;
+				coefficients[non_zero_variables_count] = 1.0;
+				non_zero_variables_count++;
+			}
+		}
+
+		right_hand_side_value = inst->nnodes - k;
+	\end{lstlisting}
+	\item \textbf{Constraint Addition}: We then add the constraint to the model: this can be done directly by adding a row directing into the model:
+	\begin{lstlisting}
+		CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense,&izero,index,coefficients, NULL, &rname);
+	\end{lstlisting}
+	or in the case we are using the CPLEX callback function, we can use the \texttt{CPXcallbackaddusercuts} function to add the constraint to the model
+	\begin{lstlisting}
+		CPXcallbackrejectcandidate(cpxcallbackcontex_tptr, 1, non_zero_variables_count,&right_hand_side_value,&constraint_sense, &izero, index, coefficients);
+	\end{lstlisting}
+	\item \textbf{Model Resolution}: We then solve the model and check if the solution is feasible. If the solution is feasible, we update the best solution found, 
+	remove the latest local Branching constrint (if necessary), and repeat the process until a stopping criterion is met.
 \end{enumerate}
+
 \subparagraph{Note}
 The \ref{eq:local_branching_constraint} in CPLEX needs to be expressed using a particular form: we need to express the constraint
 to be expressed as an inequality of the form $Ax \leq b$, where $A$ is a matrix of coefficients, $x$ is the vector of variables and $b$ is the right-hand side of the inequality.
