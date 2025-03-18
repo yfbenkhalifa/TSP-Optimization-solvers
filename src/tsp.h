@@ -23,7 +23,7 @@ void tabu_search(instance* inst, int *initial_solution, int size);
 void tsp_vns(instance* inst, int *initial_solution, int size);
 solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count);
 pair euclidean_most_distant_pair(instance* inst);
-double tsp_two_opt(instance* inst);
+double tsp_two_opt(instance* inst, Solution solution);
 void two_opt_swap(int *solution, int size, Edge e1, Edge e2);
 void initialize_instance(instance* inst, heuristic_state* state);
 int evaluate_solution(int *solution, int size);

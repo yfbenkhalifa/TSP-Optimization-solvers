@@ -373,18 +373,42 @@ Refining heuristics are a type of heuristic algorithm that iteratively improve a
 introduced so far in order to improve their performance. In the next section we will go over a one particular refining heuristic called the \textit{2-opt move}\cite{Heuristics_for_the_Traveling_Salesman_Problem}.
 
 \subsubsection{2-opt Move}
-Assume we have a graph $G = (V, E)$ and a directed tour $T \subseteq E$, valid as a tsp solution, the 2-opt move takes two edges in that tour and swaps the nodes between them. 
-In particular, let $(i, j), (h, k) \in T$, the 2-opt move replaces the edges $(i, j)$ and $(h, k)$ with the edges $(i, h)$ and $(j, k)$. \\
+Assume we have a graph $G = (V, E)$ and a directed tour $T \subseteq E$, valid as a tsp solution, 
+the 2-opt move takes two edges in that tour and swaps the nodes 
+between them.  In particular, let $(i, j), (h, k) \in T$, the 2-opt move replaces the edges $(i, j)$ and $(h, k)$ with the edges $(i, h)$ and $(j, k)$. \\
+\\
+\paragraph{Algorithm}
 The goal of this type of operation is to swap two "longer" edges for two "shorter" ones (by "longer" and "shorter" we refer to the edge cost): 
 therefore in our refining heuristic we aim at:
 \begin{enumerate}
-	\item Selecting two edges $(i, j), (h, k) \in T$ such that either:
-	\begin{itemize}
-		\item $c_{ij} + c_{hk} > c_{ih} + c_{jk}$
-		\item $\Delta((i, j) , (h, k)) = C_T()$
-	\end{itemize}
+	\item Selecting two edges $(i, j), (h, k) \in T$ such that:
+	\begin{equation}
+		c_{G}(i, j) + c_{G}(h, k) > c_{G}(i, h) + c_{G}(j, k)
+		\label{eq:2-opt-move}
+	\end{equation}
+	where $c_G(i, j)$ is the cost associated with edge $(i, j)$.
 	\item Replacing the two edges with the edges $(i, h)$ and $(j, k)$.
+	\item If the graph is directed, invert the direction of the tour of the edges between $(j, k)$ and $(i, h)$.
 \end{enumerate}
+\paragraph{Implementation}
+The 2-opt move implementation takes as input arguments:
+\begin{itemize}
+	\item \texttt{instance}: an instance of the TSP problem so solve.
+	\item \texttt{solution}: an instance of a valid TSP solution.
+\end{itemize}
+\begin{lstlisting}[language=C]
+	void tsp_2opt_move(instance* inst, int* solution);
+\end{lstlisting}
+The function is implemented as follows:
+\begin{enumerate}
+	\item \textbf{Main loop:} 
+	\begin{itemize}
+	\item The function iterates over all edges in the solution to find a valid 2-opt move. This is identified by the pair of edges that satisfy (\ref{eq:2-opt-move})
+	\item If a valid 2-opt move is found, the 
+	\item 
+	\end{itemize}
+\end{enumerate}
+\newpage
 \section{Neighbourhood Search Heauristics}
 
 \subsection{Tabu Search}
@@ -512,7 +536,7 @@ The VNS algorithm can be summarized as follows:
 	\item \textbf{Finalization:} Return the best solution found.
 \end{enumerate}
 
-
+\newpage
 \section{TSP with CPLEX}
 
 \subsection{Brief introduction to CPLEX}

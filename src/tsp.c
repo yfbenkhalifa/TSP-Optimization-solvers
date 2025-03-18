@@ -45,7 +45,7 @@ void two_opt_swap(int* solution, int size, Edge e1, Edge e2)
     solution[e1.node2] = e2.node2;
 }
 
-double tsp_two_opt(instance* instance)
+double tsp_two_opt(instance* instance, Solution *solution)
 {
     double deltaCost = 0;
     int min_a1 = -1;
@@ -59,9 +59,9 @@ double tsp_two_opt(instance* instance)
         {
             if (i == j) continue;
             int a1 = i;
-            int a2 = instance->solution[i];
+            int a2 = solution->solution[i];
             int b1 = j;
-            int b2 = instance->solution[j];
+            int b2 = solution->solution[j];
 
             double cost_a1_a2 = euclidean_distance(instance->xcoord[a1],
                                                    instance->ycoord[a1],
@@ -102,7 +102,7 @@ double tsp_two_opt(instance* instance)
         e1.node2 = min_a2;
         e2.node1 = min_b1;
         e2.node2 = min_b2;
-        two_opt_swap(instance->solution, instance->nnodes, e1, e2);
+        two_opt_swap(solution->solution, instance->nnodes, e1, e2);
     }
 
     return deltaCost;
