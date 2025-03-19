@@ -14,7 +14,7 @@ typedef struct{
     int node;
     int node_index;
     double cost;
-}solution;
+}solution_node;
 
 
 typedef struct{
@@ -91,7 +91,7 @@ typedef struct {
 
 typedef struct {
     int *solution;
-    int cost;
+    double cost;
 } Solution;
 
 void print_error(const char *err);

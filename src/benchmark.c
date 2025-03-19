@@ -74,9 +74,8 @@ void generate_test_bed(instance** test_bed, int size, int seed) {
 
 int main(int argc, char *argv[]) {
     int num_methods = 3;
-    const char* methods[] = {"GRASP", "2OPT", "ExtraMileage"};
+    const char* methods[] = {"GRASP with 2OPT", "Tabu Search", "ExtraMileage with 2OPT"};
     double* costs = ARRAY_ALLOC(sizeof(double), num_methods);
-
 
     instance* test_bed = NULL;
     int num_instances = 100;
@@ -87,14 +86,20 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < num_instances; i++) {
         instance inst = test_bed[i];
         char instance_name[32];
+        int *starting_solution = (int*)malloc(inst.nnodes * sizeof(int));
         snprintf(instance_name, sizeof(instance_name), "random_%d", inst.nnodes);
 
-        int* solution = (int*)malloc(inst.nnodes * sizeof(int));
-        tsp_grasp(&inst, 0);
+        Solution *solution = (Solution*)malloc(sizeof(Solution));
+        tsp_grasp(&inst, solution, 0);
+        for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
         costs[0] = compute_solution_cost(&inst, inst.solution);
-        tsp_two_opt(&inst);
+        memcpy(starting_solution, solution->solution, inst.nnodes * sizeof(int));
+        solution = (Solution*)malloc(sizeof(Solution));
+        tabu_search(&inst, starting_solution, solution, 10);
         costs[1] = compute_solution_cost(&inst, inst.solution);
-        tsp_extra_mileage(&inst, euclidean_most_distant_pair(&inst));
+        solution = (Solution*)malloc(sizeof(Solution));
+        tsp_extra_mileage(&inst, solution, euclidean_most_distant_pair(&inst));
+        for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
         costs[2] = compute_solution_cost(&inst, inst.solution);
         append_benchmark_result("../benchmark.csv", instance_name, methods, costs, num_methods);
         free(solution);

@@ -234,7 +234,8 @@ The GRASP algorithm is implemented as follows:
 The complete code of the imeplementation can be found in the appendix section\ref{appendix:tsp_grasp}.
 
 \subsection{Extra Mileage}
-In the extra mileage heuristic, we try to build a valid tsp solution starting an edge of the graph and we try and build a tour by selecting the adjacent edge with the minimum cost.
+In the extra mileage heuristic, we try to build a valid tsp solution starting an edge of the graph and we try and build a 
+tour by selecting the adjacent edge with the minimum cost.
 
 \paragraph{Algorithm}
 The extra mileage algorithm can be summarized as follows:
@@ -404,16 +405,17 @@ The function is implemented as follows:
 	\item \textbf{Main loop:} 
 	\begin{itemize}
 	\item The function iterates over all edges in the solution to find a valid 2-opt move. This is identified by the pair of edges that satisfy (\ref{eq:2-opt-move})
-	\item If a valid 2-opt move is found, the 
-	\item 
+	\item If a valid 2-opt move is found, the pair is saved as the designated edges to be swapped.
 	\end{itemize}
+	\item \textbf{Swap:} We apply the 2-opt move on the solution by swapping the designated edges.
+	\item \textbf{Finalization:} We invert the direction of the edges between $(j, k)$ and $(i, h)$ if the graph is directed.
 \end{enumerate}
 \newpage
-\section{Neighbourhood Search Heauristics}
+\section{Neighbourhood Search Heuristics}
+Neighbourhood serach algorithms are a family of algorithms whose search strategy is based moving from one neighbour solution to another. These neighbours are 
 
 \subsection{Tabu Search}
-The Tabu search is a type of neighborhood search algorithm. These type of algorithms are base on a search strategy that explore the solution search space by applying 
-the two-opt move to the current solution. 
+The Tabu search is a type of neighborhood search algorithm. 
 Differently with what happened with greedy algorithms like the GRASP, the Tabu search algorithm is able to escape local optima by allowing the search to move to worse solutions,
 which can help the algorithm explore new regions of the search space and potentially find better solutions.
 The main idea behind the Tabu search heuristic is to exclude the already explored solutions from the search space. 

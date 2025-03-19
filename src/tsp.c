@@ -108,7 +108,7 @@ double tsp_two_opt(instance* instance, Solution *solution)
     return deltaCost;
 }
 
-void tsp_grasp(instance* inst, int starting_node)
+void tsp_grasp(instance* inst, Solution *solution, int starting_node)
 {
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with GRASP\n");
@@ -121,15 +121,15 @@ void tsp_grasp(instance* inst, int starting_node)
 
     int current_node_index = starting_node;
     int remaining_nodes_count = inst->nnodes;
-    solution nearest_node;
+    solution_node nearest_node;
     int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
 
-    inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
+    solution->solution = (int*)malloc(inst->nnodes * sizeof(int));
     inst->best_cost_value = 0;
 
     for (int i = 0; i < inst->nnodes; i++)
     {
-        inst->solution[i] = -1;
+        solution->solution[i] = -1;
         remaining_nodes[i] = i;
     }
 
@@ -142,22 +142,22 @@ void tsp_grasp(instance* inst, int starting_node)
 
         if (nearest_node.node == -1)
         {
-            inst->solution[current_node_index] = starting_node;
-            inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
+            solution->solution[current_node_index] = starting_node;
+            solution->cost += euclidean_distance(inst->xcoord[current_node_index],
                                                         inst->ycoord[current_node_index],
                                                         inst->xcoord[starting_node],
                                                         inst->ycoord[starting_node], false);
             continue;
         }
-        inst->solution[current_node_index] = nearest_node.node;
-        inst->best_cost_value += nearest_node.cost;
+        solution->solution[current_node_index] = nearest_node.node;
+        solution->cost += nearest_node.cost;
         current_node_index = nearest_node.node;
     }
 
     clock_t end_time = clock();
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
-    inst->best_cost_value = compute_solution_cost(inst, inst->solution);
+    solution->cost = compute_solution_cost(inst, solution->solution);
     log_message(LOG_LEVEL_INFO, "GRASP solution time: %f seconds\n", elapsed_time);
     log_message(LOG_LEVEL_INFO, "GRASP solution cost: %f\n", inst->best_cost_value);
 
@@ -216,7 +216,7 @@ bool is_2opt_neighbour(int* solution1, int* solution2, int size)
     return differing_edges == 2;
 }
 
-void tsp_extra_mileage(instance* inst, pair starting_pair)
+void tsp_extra_mileage(instance* inst, Solution *solution, pair starting_pair)
 {
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with Extra Mileage\n");
@@ -227,8 +227,8 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
 
     initialize_instance(inst, &state);
 
-    inst->solution[current_pair.node1] = current_pair.node2;
-    inst->solution[current_pair.node2] = current_pair.node1;
+    solution->solution[current_pair.node1] = current_pair.node2;
+    solution->solution[current_pair.node2] = current_pair.node1;
     state.covered_nodes[state.covered_nodes_count++] = current_pair.node1;
     state.covered_nodes[state.covered_nodes_count++] = current_pair.node2;
     state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
@@ -237,12 +237,12 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
     while (state.covered_nodes_count < inst->nnodes)
     {
         log_message(LOG_LEVEL_INFO, "Covered nodes count: %d\n", state.covered_nodes_count);
-        solution best_node;
+        solution_node best_node;
         for (int i = 0; i < state.covered_nodes_count; i++)
         {
             log_message(LOG_LEVEL_INFO, "Current node index: %d\n", i);
             int current_node = state.covered_nodes[i];
-            int current_node_opposite = inst->solution[current_node];
+            int current_node_opposite = solution->solution[current_node];
             double min_distance_delta = INFINITY;
             best_node.node = -1;
             best_node.node_index = -1;
@@ -274,15 +274,15 @@ void tsp_extra_mileage(instance* inst, pair starting_pair)
             if (best_node.node > -1)
             {
                 log_message(LOG_LEVEL_INFO, "Best node found: %d\n", best_node.node);
-                inst->solution[current_node] = best_node.node;
-                inst->solution[best_node.node] = current_node_opposite;
+                solution->solution[current_node] = best_node.node;
+                solution->solution[best_node.node] = current_node_opposite;
                 state.covered_nodes[state.covered_nodes_count++] = best_node.node;
                 state.uncovered_nodes[best_node.node_index] = state.uncovered_nodes[--state.uncovered_nodes_count];
             }
         }
     }
 
-    inst->best_cost_value = compute_solution_cost(inst, inst->solution);
+    inst->best_cost_value = compute_solution_cost(inst, solution->solution);
     clock_t end_time = clock();
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     inst->elapsed_time = elapsed_time;
@@ -333,10 +333,10 @@ pair euclidean_most_distant_pair(instance* inst)
     return most_distant_pair;
 }
 
-solution euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count)
+solution_node euclidean_nearest_node(instance* instance, int node, int* remaining_nodes, int* remaining_nodes_count)
 {
     double min_distance = INFINITY;
-    solution nearest_node;
+    solution_node nearest_node;
     nearest_node.node = -1;
     nearest_node.node_index = -1;
     nearest_node.cost = min_distance;
@@ -374,7 +374,7 @@ double compute_geometric_mean(instance testBed[], int testBedSolutions[])
     return pow(product, 1.0 / num_instances);
 }
 
-void tabu_search(instance* inst, int* initial_solution, int size)
+void tabu_search(instance* inst, int* initial_solution, Solution *solution, int size)
 {
     clock_t start_time = clock();
     log_message(LOG_LEVEL_INFO, "Solving TSP with Tabu Search\n");
@@ -390,8 +390,8 @@ void tabu_search(instance* inst, int* initial_solution, int size)
     int tabu_index = 0;
 
     Solution best_solution;
-    best_solution.solution = (int*)malloc(size * sizeof(int));
-    memcpy(best_solution.solution, initial_solution, size * sizeof(int));
+    best_solution.solution = (int*)malloc(inst->nnodes * sizeof(int));
+    memcpy(best_solution.solution, initial_solution, inst->nnodes * sizeof(int));
     best_solution.cost = compute_solution_cost(inst, best_solution.solution);
 
     Solution current_solution = best_solution;
@@ -404,7 +404,7 @@ void tabu_search(instance* inst, int* initial_solution, int size)
         {
             neighbours[i] = (int*)malloc(size * sizeof(int));
         }
-        generate_neighbors(current_solution.solution, size, neighbours, num_neighbors);
+        generate_neighbors(current_solution.solution, inst->nnodes, neighbours, num_neighbors);
 
         Solution best_neighbor;
         best_neighbor.solution = NULL;
@@ -442,7 +442,7 @@ void tabu_search(instance* inst, int* initial_solution, int size)
 
     inst->best_cost_value = compute_solution_cost(inst, best_solution.solution);
     log_message(LOG_LEVEL_INFO, "Best solution cost: %d\n", best_solution.cost);
-    memcpy(inst->solution, best_solution.solution, size * sizeof(int));
+    memcpy(solution->solution, best_solution.solution, size * sizeof(int));
 
     clock_t end_time = clock();
     double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
