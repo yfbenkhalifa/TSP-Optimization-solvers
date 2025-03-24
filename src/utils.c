@@ -345,7 +345,7 @@ void read_input(instance* inst)
 bool has_duplicates(instance* inst, const int* solution)
 {
     if (inst->nnodes == -1) return false;
-    int* hash_set = (int*)calloc(inst->nnodes, sizeof(int));
+    int* hash_set = (int*)malloc(inst->nnodes * sizeof(int));
     if (hash_set == NULL)
     {
         return false;

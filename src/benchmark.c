@@ -90,19 +90,26 @@ int main(int argc, char *argv[]) {
         snprintf(instance_name, sizeof(instance_name), "random_%d", inst.nnodes);
 
         Solution *solution = (Solution*)malloc(sizeof(Solution));
+        solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tsp_grasp(&inst, solution, 0);
         for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
         costs[0] = compute_solution_cost(&inst, inst.solution);
         memcpy(starting_solution, solution->solution, inst.nnodes * sizeof(int));
+        free(solution);
+
         solution = (Solution*)malloc(sizeof(Solution));
+        solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tabu_search(&inst, starting_solution, solution, 10);
         costs[1] = compute_solution_cost(&inst, inst.solution);
+        free(solution);
+
         solution = (Solution*)malloc(sizeof(Solution));
+        solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tsp_extra_mileage(&inst, solution, euclidean_most_distant_pair(&inst));
         for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
         costs[2] = compute_solution_cost(&inst, inst.solution);
-        append_benchmark_result("../benchmark.csv", instance_name, methods, costs, num_methods);
         free(solution);
+        append_benchmark_result("../benchmark.csv", instance_name, methods, costs, num_methods);
     }
 
     for (int i = 0; i < num_instances; i++) {

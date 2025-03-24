@@ -30,7 +30,7 @@ bool is_neighbor(const int* solution1, const int* solution2, int size)
 
 void two_opt_swap(int* solution, int size, Edge e1, Edge e2)
 {
-    int* solution_copy = (int*)malloc(sizeof(int) * size);
+    int* solution_copy = (int*)calloc(size, sizeof(int));
     solution[e1.node1] = e2.node1;
     int i = e1.node2;
     int temp = -1;
@@ -43,6 +43,7 @@ void two_opt_swap(int* solution, int size, Edge e1, Edge e2)
     }
     memcpy(solution, solution_copy, size * sizeof(int));
     solution[e1.node2] = e2.node2;
+    free(solution_copy);
 }
 
 double tsp_two_opt(instance* instance, Solution *solution)
@@ -164,6 +165,7 @@ void tsp_grasp(instance* inst, Solution *solution, int starting_node)
     free(remaining_nodes);
 }
 
+
 void random_solution(instance* inst, int* solution)
 {
     // Initialize the solution with node indices
@@ -182,11 +184,6 @@ void random_solution(instance* inst, int* solution)
         solution[j] = temp;
     }
 
-    // Ensure the solution is a valid TSP solution
-    if (!is_tsp_solution(inst, solution))
-    {
-        random_solution(inst, solution); // Retry if the solution is not valid
-    }
 }
 
 bool is_2opt_neighbour(int* solution1, int* solution2, int size)
@@ -214,6 +211,44 @@ bool is_2opt_neighbour(int* solution1, int* solution2, int size)
         }
     }
     return differing_edges == 2;
+}
+
+void tsp_simulated_annealing(instance* instance, Solution* solution, Solution *initial_solution)
+{
+    Solution *current_solution = (Solution*)malloc(sizeof(Solution));
+
+    memcpy(current_solution, initial_solution, sizeof(Solution));
+    double current_cost = initial_solution->cost;
+    int max_iterations = 100;
+    for (int i=0; i<max_iterations; i++)
+    {
+        int *next_solution = (int*)malloc(sizeof(Solution));
+        do
+        {
+            random_solution(instance, next_solution);
+        }while (!is_tsp_solution(instance, next_solution));
+        double new_solution_cost = compute_solution_cost(instance, next_solution);
+        if (new_solution_cost < current_cost)
+        {
+            memcpy(current_solution, next_solution, sizeof(Solution));
+            current_cost = new_solution_cost;
+        }
+        else
+        {
+            double delta = new_solution_cost - current_cost;
+            double probability = exp(-delta / i);
+            double random_number = (double)rand() / RAND_MAX;
+            if (random_number < probability)
+            {
+                memcpy(current_solution, next_solution, instance->nnodes * sizeof(int));
+                current_cost = new_solution_cost;
+            }
+        }
+        free(next_solution);
+    }
+    free(current_solution);
+
+
 }
 
 void tsp_extra_mileage(instance* inst, Solution *solution, pair starting_pair)
