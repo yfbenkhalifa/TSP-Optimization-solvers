@@ -48,7 +48,7 @@ void generate_test_bed(instance** test_bed, int size, int seed) {
     for (int i = 0; i < size; i++) {
         // Generate random instance with different seeds
         int instance_seed = seed + i;
-        int nodes = 200 + (rand() % 1000); // Random size between 10 and 100 nodes
+        int nodes = 50 + (rand() % 100); // Random size between 10 and 100 nodes
 
         // Initialize solution array
         (*test_bed)[i].solution = (int*)malloc(nodes * sizeof(int));
@@ -93,21 +93,21 @@ int main(int argc, char *argv[]) {
         solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tsp_grasp(&inst, solution, 0);
         for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
-        costs[0] = compute_solution_cost(&inst, inst.solution);
+        costs[0] = compute_solution_cost(&inst, solution->solution);
         memcpy(starting_solution, solution->solution, inst.nnodes * sizeof(int));
         free(solution);
 
         solution = (Solution*)malloc(sizeof(Solution));
         solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tabu_search(&inst, starting_solution, solution, 10);
-        costs[1] = compute_solution_cost(&inst, inst.solution);
+        costs[1] = compute_solution_cost(&inst, solution->solution);
         free(solution);
 
         solution = (Solution*)malloc(sizeof(Solution));
         solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
         tsp_extra_mileage(&inst, solution, euclidean_most_distant_pair(&inst));
         for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
-        costs[2] = compute_solution_cost(&inst, inst.solution);
+        costs[2] = compute_solution_cost(&inst, solution->solution);
         free(solution);
         append_benchmark_result("../benchmark.csv", instance_name, methods, costs, num_methods);
     }
