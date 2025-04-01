@@ -351,6 +351,11 @@ bool has_duplicates(instance* inst, const int* solution)
         return false;
     }
 
+    for (int i= 0; i < inst->nnodes; i++)
+    {
+        hash_set[i] = 0;
+    }
+
     for (int i = 0; i < inst->nnodes; i++)
     {
         int value = solution[i];

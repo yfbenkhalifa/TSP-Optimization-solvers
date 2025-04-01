@@ -493,7 +493,7 @@ void tabu_search(instance* inst, int* initial_solution, Solution *solution, int 
     free(tabu_list);
 }
 
-void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
+void tsp_vns(instance* inst, int* initial_solution, Solution *final_solution, int neighbourhood_size)
 {
     // initializ time and log
     clock_t start_time = clock();
@@ -557,12 +557,11 @@ void tsp_vns(instance* inst, int* initial_solution, int neighbourhood_size)
             log_message(LOG_LEVEL_INFO, "Max iterations reached\n");
             stop_criterion = false;
         }
+        free(neighbourhood);
     }
     while (stop_criterion);
 
-    // update the instance with the new solution
-    memcpy(inst->solution, current_solution, inst->nnodes * sizeof(int));
-
+    memcpy(final_solution->solution, current_solution, inst->nnodes * sizeof(int));
     // update elapsed time
     double total_elapsed_time = ((double)(clock() - start_time)) / CLOCKS_PER_SEC;
 
