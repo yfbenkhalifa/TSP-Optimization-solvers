@@ -819,14 +819,35 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 \section{Mathheuristics}
 In the field of Mathematical optimization, one of the most tackled issues is the efficiency and the performance with which
 we are able to solve MIP problems. With time, both solver and the hardware have evolved to the point where we are able to solve even some large scale problems 
-in a reasonable amount of time. However, there are still some problems that are too large to be solved in a reasonable amount of time, and this is where the Mathheuristics 
-come into play. Mathheuristics are a combination of mathematical optimization techniques and heuristics that are used to improve the efficiency and performance of 
+in a reasonable amount of time. However, there are still some problems that are too large to be solved in a reasonable amount of time, 
+and this is where the Mathheuristics come into play. 
+Mathheuristics are a combination of mathematical optimization techniques and heuristics that are used to improve the efficiency and performance of 
 already existing mathematical optimization algorithms.\cite{Fischetti2003LocalBranching}\cite{Fischetti2016Matheuristics} \\
-In this section we will go over the implementation of the following Mathheuristics:
+
+Over the next sections we will go over a brief introduction to General-Purpose MIP Heuristics and the implementation of the following Mathheuristics algorithms:
 \begin{itemize}
 	\item \textbf{Hard Fixing}
 	\item \textbf{Local Branching}
 \end{itemize}
+
+\subparagraph{General-Purpose MIP-Based Heuristics}
+General-Purpose MIP-Based Heuristics form the basis for the Mathheuristics algorithm family, their relevance are jsutified by two main reasons:
+\begin{itemize}
+	\item They function as vital components for efficiently solving specialized subproblems that emerge during the application of matheuristic approaches to complex optimization challenges.
+	\item They demonstrate the significant advantages that general-purpose MIP solvers can gain by incorporating metaheuristic concepts such as local search methodologies and evolutionary algorithms.
+\end{itemize}
+let us then define the genral form of a MIP:
+\begin{align}
+	 & \min c^Tx \\
+	 & Ax \leq b \\
+	 & x_j \in \{0, 1 \}, \forall j \in \mathcal{B} \\
+	 & x_j \text{integer}, \forall j \in \mathcal{G} \\
+	 & x_j \text{continuous}, \forall j \in \mathcal{C}
+\end{align}
+where $A$ is an $m \times n$ input matrix and $b$ and $c$ are input vectors of dimension $m$ and $n$, 
+respectively. Here, the variable index set $N = \{1, \ldots, n\}$ is partitioned into $(B, G, C)$,
+where $B$ is the index set of the binary variables (if any), while sets $G$ and $C$ index the general integer and the continuous variables, 
+respectively.
 
 Mathheuristics algorithms are meant ot be used in concatenation with a "black box" solver, meaning that these algorithms are not directly implemented directly into the solver, but thery are 
 applied onto the input instance that is about to be fed into the solver. The idea is to improve the overall performance of the solver by optimizing the search space for solver to explore.\cite{Fischetti2016Matheuristics}
@@ -860,108 +881,10 @@ In the callback function, the cplex\_hard\_fixing function is called, which fixe
 The function does the following:
 \begin{enumerate}
 	\item \textbf{Update incumbent}: Get the current solution from the callback context
-	\begin{lstlisting}
-		int error = CPXcallbackgetcandidatepoint(context, xstar, 0, ncols - 1, NULL);
-	\end{lstlisting}
 	\item \textbf{Restore to original instance}: Reset the bounds of all variables to their original values (0.0 to 1.0).
-	\begin{lstlisting}
-		
-	\end{lstlisting}
 	\item Fix a subset of variables based on the given probability p\_fix.
 	\item Apply the fixing by adding constraints to the model.
 \end{enumerate}
-
-\begin{lstlisting}
-int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double p_fix)
-{
-    int ncols = instance->ncols;
-    double* xstar = (double*)calloc(ncols, sizeof(double));
-    int* indices = (int*)calloc(ncols, sizeof(int));
-    double* bd = (double*)calloc(ncols, sizeof(double));
-    char* lu = (char*)calloc(ncols, sizeof(char));
-
-    // Initialize random seed
-    srand(time(NULL));
-
-    // Get the current solution
-    int error = CPXcallbackgetcandidatepoint(context, xstar, 0, ncols - 1, NULL);
-    if (error)
-    {
-        free(xstar);
-        free(indices);
-        free(bd);
-        free(lu);
-        return error;
-    }
-
-    // Reset the bounds of all variables to their original values (0.0 to 1.0)
-    for (int i = 0; i < ncols; i++)
-    {
-        indices[i] = i;
-        lu[i] = 'B'; // Both lower and upper bounds
-        bd[i] = 0.0; // Lower bound
-    }
-    error = CPXcallbackpostheursoln(context, ncols, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
-    if (error)
-    {
-        free(xstar);
-        free(indices);
-        free(bd);
-        free(lu);
-        return error;
-    }
-
-    for (int i = 0; i < ncols; i++)
-    {
-        bd[i] = 1.0; // Upper bound
-    }
-
-    error = CPXcallbackpostheursoln(context, ncols, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
-    if (error)
-    {
-        free(xstar);
-        free(indices);
-        free(bd);
-        free(lu);
-        return error;
-    }
-
-    // Fix a subset of variables based on the given probability
-    int fix_count = 0;
-    for (int i = 0; i < ncols; i++)
-    {
-        if (((double)rand() / RAND_MAX) < p_fix)
-        {
-            indices[fix_count] = i;
-            lu[fix_count] = 'L'; // Only lower bound
-            bd[fix_count] = 1.0; // Fix to 1
-            fix_count++;
-        }
-    }
-
-    // Apply the fixing
-    if (fix_count > 0)
-    {
-        error = CPXcallbackpostheursoln(context, fix_count, indices, bd, 0.0, CPXCALLBACKSOLUTION_PROPAGATE);
-        if (error)
-        {
-            free(xstar);
-            free(indices);
-            free(bd);
-            free(lu);
-            return error;
-        }
-    }
-
-    free(xstar);
-    free(indices);
-    free(bd);
-    free(lu);
-    return error;
-}
-\end{lstlisting}
-
-
 
 \subsection{Local Branching}
 As for the Hard fixing heuristic, the Local branching algorihtm is meant to be used with a heuristic black TSP solver to optimize its performance.
