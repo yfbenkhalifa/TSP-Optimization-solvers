@@ -36,7 +36,7 @@ void append_benchmark_result(const char* filename, const char* instance_name, co
 
 
 
-void generate_test_bed(instance** test_bed, int size, int seed) {
+void generate_test_bed(instance** test_bed, int size, int seed, int min_nodes, int max_nodes) {
     // Allocate array of instances
     *test_bed = (instance*)malloc(size * sizeof(instance));
     if (*test_bed == NULL) {
@@ -48,7 +48,7 @@ void generate_test_bed(instance** test_bed, int size, int seed) {
     for (int i = 0; i < size; i++) {
         // Generate random instance with different seeds
         int instance_seed = seed + i;
-        int nodes = 50 + (rand() % 100); // Random size between 10 and 100 nodes
+        int nodes = min_nodes + (rand() % max_nodes); // Random size between 10 and 100 nodes
 
         // Initialize solution array
         (*test_bed)[i].solution = (int*)malloc(nodes * sizeof(int));
@@ -78,10 +78,10 @@ int main(int argc, char *argv[]) {
     double* costs = ARRAY_ALLOC(sizeof(double), num_methods);
 
     instance* test_bed = NULL;
-    int num_instances = 100;
+    int num_instances = 300;
     int seed = 42;
 
-    generate_test_bed(&test_bed, num_instances, seed);
+    generate_test_bed(&test_bed, num_instances, seed, 100, 500);
 
     for (int i = 0; i < num_instances; i++) {
         instance inst = test_bed[i];
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
         Solution *solution = (Solution*)malloc(sizeof(Solution));
         solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
-        tsp_grasp(&inst, solution, 0);
+        tsp_grasp(&inst, solution, rand() % inst.nnodes);
         for (int j = 0; j< MAX_ITERATIONS; j++) tsp_two_opt(&inst, solution);
         costs[0] = compute_solution_cost(&inst, solution->solution);
         memcpy(starting_solution, solution->solution, inst.nnodes * sizeof(int));
