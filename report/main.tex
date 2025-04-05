@@ -2,7 +2,8 @@
 \usepackage{listings}
 \usepackage{listings}
 \usepackage{xcolor}
-
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
@@ -51,14 +52,86 @@
 \maketitle
 
 \section{Introduction}
-In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the CPLEX optimization LP optimization framework.
-The goal is to research and implement the most common Metaheuristics and Mathheuristics for solving the TSP problem using MIP problems 
-The work done is subdivided into two main categories:
+The Traveling Salesman Problem (TSP) stands as one of the most iconic and extensively studied problems in combinatorial optimization and computer science. Despite its deceptively simple formulation—finding the shortest 
+possible route that visits each city exactly once and returns to the origin city—the TSP has profound implications for both theoretical computer science and practical applications.
+
+In this thesis we will go over the implementation of the main heuristics involving the famous TSP problem. The entire implementation is done using the C programming language and the 
+CPLEX optimization LP optimization framework.
+The goal is to research and implement the most common Metaheuristics and Mathheuristics for solving the TSP problem using MIP problems.
+
+Throughout this thesis, we will explore the historical development of each optimization method discussed. We will trace the evolution of metaheuristics from early construction heuristics to 
+sophisticated approaches like 
+Tabu Search and Variable Neighborhood Search, examining how these methods emerged in response to computational challenges. 
+Similarly, we will investigate the historical context behind mathheuristics, which represent a 
+more recent fusion of mathematical programming with heuristic frameworks, developed to address the 
+limitations of pure exact methods when tackling large-scale combinatorial problems. This historical perspective will 
+provide valuable insights into why particular techniques were developed and how they have evolved to their current form.
+
+
+\subsection{The TSP Problem and Its Significance}
+The TSP belongs to the class of NP-hard problems, meaning that no known algorithm can solve it optimally in polynomial time as the problem size increases. 
+This fundamental hardness has made the TSP a benchmark problem for evaluating algorithmic approaches and computational methods. The significance of the TSP extends far beyond its theoretical interest, with applications 
+spanning numerous domains:
+\begin{itemize}
+	\item Logistics and transportation planning
+	\item Circuit board drilling in manufacturing
+	\item DNA sequencing in bioinformatics
+	\item Vehicle routing and delivery optimization
+	\item Telecommunications network design
+	\item Warehouse order picking
+\end{itemize}
+
+The universality of the TSP's structure—finding an optimal arrangement or sequence—makes it relevant to any field where minimizing traversal costs is essential.
+
+\subsection{Metaheuristics for TSP}
+Given the computational intractability of finding exact solutions for large TSP instances, researchers have developed various metaheuristics—high-level problem-independent algorithmic frameworks 
+that provide strategies for developing heuristic optimization algorithms. Unlike exact methods, metaheuristics sacrifice the guarantee of optimality for computational efficiency, providing near-optimal solutions in reasonable time frames.
+
+Metaheuristics for the TSP include:
+\begin{itemize}
+	\item Construction heuristics like Nearest Neighbor and Greedy algorithms that build tours incrementally
+	\item Local search methods such as 2-opt and 3-opt that iteratively improve solutions
+	\item Population-based approaches like Genetic Algorithms that evolve multiple solutions simultaneously
+	\item Memory-based techniques such as Tabu Search that use historical information to guide the search
+	\item Adaptive methods like GRASP (Greedy Randomized Adaptive Search Procedure) that combine greedy elements with randomization
+\end{itemize}
+
+These approaches have proven remarkably effective in practice, often producing solutions within a few percentage points of optimality for instances with thousands of cities.
+
+\subsection{Mathheuristics for TSP}
+Mathheuristics represent a more recent development in the field, combining mathematical programming techniques with metaheuristic frameworks. 
+These hybrid methods leverage the strengths of exact optimization methods (like linear and integer programming) while maintaining the scalability advantages of heuristics.
+
+For the TSP, mathheuristics typically involve:
+\begin{itemize}
+	\item Decomposition techniques that break the problem into manageable subproblems
+	\item Variable fixing approaches that reduce the problem size by fixing certain decision variables
+	\item Local branching methods that explore neighborhoods defined by mathematical constraints
+	\item Cut generation procedures that iteratively strengthen mathematical formulations
+\end{itemize}
+
+By integrating mathematical rigor with heuristic flexibility, mathheuristics often achieve superior performance compared to either approach used independently, 
+especially for complex or large-scale instances.
+
+\subsection{Scope of This Thesis}
+This thesis investigates both traditional metaheuristics and modern mathheuristics for solving the TSP, implementing and analyzing several 
+approaches using the C programming language and the CPLEX optimization framework. We focus on understanding the mathematical foundations, implementation details, 
+and computational performance of these methods, with particular attention to their practical effectiveness across different problem instances.
+
+Through systematic experimentation and analysis, we aim to provide insights into the strengths and limitations of different solution approaches, contributing to the 
+ongoing effort to develop more efficient algorithms for this foundational optimization problem.
+
+Throught the next chapters we will be going over following:
 \begin{enumerate}
+	\item \textbf{Introduction to the TSP Problem}: quick overview of the Mathematical formulation of the TSP problem.
 	\item \textbf{Heuristics}: Implementation of common heuristic algorithms including:
 		\begin{itemize}
 			\item Greedy Randomized Adaptive Search (GRASP)
 			\item Extra Mileage
+			\item Refining Heuristics (2-opt move)
+		\end{itemize}
+	\item \textbf{Neighbourhood Search}: Implementation of neighbourhood search algorithms including:
+		\begin{itemize}
 			\item Tabu Search
 			\item Variable Neighborhood Search (VNS)
 		\end{itemize}
@@ -72,22 +145,19 @@ The work done is subdivided into two main categories:
 For each algorithm, we will examine the implementation details, mathematical foundations, and effectiveness in solving the TSP problem. 
 The implementations for the mathheuristic algorithms are done utilizing the CPLEX optimization framework. 
 
-The thesis is organized as follows:
-\begin{itemize}
-	\item First, we present the mathematical formulation of the TSP problem and the data structures used
-	\item Next, we discuss each heuristic algorithm implementation in detail
-	\item Then, we explore the integration with CPLEX and mathheuristic approaches
-	\item Finally, we analyze the performance and effectiveness of each method
-\end{itemize}
- 
-\subsection{The Traveling Salesman Problem}
+\newpage
+
+\section{The Traveling Salesman Problem}
 The Traveling Salesman Problem (TSP) is one of the most extensively studied problems in combinatorial optimization. The problem asks to find the shortest possible route that visits each city exactly once and returns to the origin city, 
 given a set of cities and the distances between them.
-Formally, given a set of n cities and a cost matrix [cij] that specifies the cost (or distance) of traveling from city i to city j, the goal is to find a permutation of the cities that minimizes the total tour length. 
+Formally, given a set of $n$ cities and a cost matrix $[cij]$ that specifies the cost (or distance) of traveling from city $i$ to city $j$, the goal is to find a permutation of the cities that minimizes the total tour length. 
 Despite its simple description, the TSP is NP-hard, meaning there is no known polynomial-time algorithm that can solve it optimally for large instances.
 
-\paragraph{Mathematical Formulation}
-The TSP can be formulated as an optimization problem as follows:
+\subsection{Mathematical Formulation}
+First let us define the components that characterize the TSP problem: we begin from a graph $G = (V, E)$ where $V$ is the set of vertices (cities) and $E$ is the set of edges connecting the vertices, and a cost matrix $C$ containing the weights/costs of each edge $(i, j) \in E$. 
+Spoiler: in the implementation instead of adopting a big cost matrix, we will be simply using the euclidean distance between the nodes for computing the cost $c_{i, j}$ of a given edge $(i, j)$ , therefore the cost of a tour will simply be computed as the sum of the euclidean distances between the nodes. This will not affect the final formulation.   
+
+We then can formalize Traveling Salesman Problem  as an optimization problem as follows:
 \begin{equation}
 	\min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
 \end{equation}
@@ -96,16 +166,10 @@ subject to:
 	\sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
 \end{equation}
 \begin{equation}
-	\sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
-\end{equation}
-\begin{equation}
 	u_i - u_j + nx_{ij} \leq n-1 \quad \forall i \in \{2, \ldots, n\}, j \in \{2, \ldots, n\}
 \end{equation}
 \begin{equation}
 	x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
-\end{equation}
-\begin{equation}
-	u_i \in \mathit{text} \quad \forall i \in \{1, \ldots, n\}
 \end{equation}
 where:
 \begin{itemize}
@@ -115,20 +179,23 @@ where:
 \end{itemize}
 
 
-\section{TSP data structure}
-Throught the implementation of the Metaheuristics and Mathheuristics, we will be using the following data structures:
+\newpage
+
+\section{Metaheuristics for TSP}
+Metaheuristics represent a sophisticated class of computational methods that have evolved to address complex optimization problems where exact methods become impractical due to computational constraints. 
+As optimization problems grow in scale and complexity, traditional exact methods often struggle with the combinatorial explosion of possible solutions. 
+Metaheuristics emerged as an effective approach to navigate these vast solution spaces by intelligently balancing exploration of new regions with exploitation of promising areas.
+
+\subsection{Historical Development}
+
+In this section we will go over the implementation of the following metaheuristics:
 \begin{itemize}
-	\item \text{instance} : A structure that holds the TSP instance data. This is implemented as a C data structure
-	      in which we hold all the metadata relevant to the loaded TSP instance.
-	\item \text{solution} : A structure that holds the TSP solution data. Normally this is represented as a simple integer array in which we map for every nodex
-	      index its successor in the tour. This type of solution representation suits both the indirected and directed graph cases.
+	\item Greedy Randomized Adaptive Search (GRASP)
+	\item Extra Mileage
+	\item Refining Heuristics (2-opt move)
+	\item Tabu Search
+	\item Variable Neighborhood Search (VNS)
 \end{itemize}
-The code for the data structures implementation can be found in the appendinx section.
-
-The cost functio used is the euclidean distance between two nodes in the graph.
-The code for the implementation can be found in the appendix section \ref{appendix:euclidean_distance}.
-
-\section{TSP Heurisitcs}
 
 \subsection{Greedy Randomized Adaptive Search (GRASP)}
 The GRASP method is basically a greedy randomized adaptive search procedure.
@@ -154,7 +221,9 @@ The GRASP algorithm can be summarized as follows:
 	\item \textbf{Local Search:} Improve the constructed solution using local search.
 	\item \textbf{Update:} If the improved solution is better than the best solution found, update the best solution.
 	\item \textbf{Termination:} Repeat steps 2-4 until a stopping criterion is met (e.g., a maximum number of iterations).
+    \item 
 \end{enumerate}
+
 
 \paragraph{Implementation}
 The implementation of the GRASP algorithm takes as input arguments:
@@ -162,9 +231,6 @@ The implementation of the GRASP algorithm takes as input arguments:
 	\item \texttt{instance}: The TSP instance data structure.
 	\item \texttt{start\_node}: The index of the starting node for the tour.
 \end{itemize}
-\begin{lstlisting}[language=C]
-	void tsp_grasp(instance* inst, int starting_node);
-\end{lstlisting}
 The function internally allocates and sets the solution as an array integers representing the tour....
 The GRASP algorithm is implemented as follows:
 \begin{enumerate} 
@@ -177,21 +243,6 @@ The GRASP algorithm is implemented as follows:
 		      \item The remaining nodes array is initialized with all node indices.
 	      \end{itemize}
 
-		\begin{lstlisting}[language=C]
-			clock_t start_time = clock();
-			int current_node_index = starting_node;
-			int remaining_nodes_count = inst->nnodes;
-			solution nearest_node;
-			int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
-			inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
-			inst->best_cost_value = 0;
-			for (int i = 0; i < inst->nnodes; i++) {
-				inst->solution[i] = -1;
-				remaining_nodes[i] = i;
-			}
-			remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
-		\end{lstlisting}
-
 	\item \textbf{Main Loop}:
 	      \begin{itemize}
 		      \item The function iterates over all nodes to construct the solution.
@@ -200,22 +251,7 @@ The GRASP algorithm is implemented as follows:
 		      \item Otherwise, it updates the solution with the nearest node and logs the current node index and nearest node found.
 		      \item The current node index is updated to the nearest node for the next iteration.
 	      \end{itemize}
-		  \begin{lstlisting}[language=C]
-			for (int i = 0; i < inst->nnodes; i++) {
-				nearest_node = euclidean_nearest_node(inst, current_node_index, remaining_nodes, &remaining_nodes_count);
-				if (nearest_node.node == -1) {
-					inst->solution[current_node_index] = starting_node;
-					inst->best_cost_value += euclidean_distance(inst->xcoord[current_node_index],
-																inst->ycoord[current_node_index],
-																inst->xcoord[starting_node],
-																inst->ycoord[starting_node], false);
-					continue;
-				}
-				inst->solution[current_node_index] = nearest_node.node;
-				inst->best_cost_value += nearest_node.cost;
-				current_node_index = nearest_node.node;
-    		}
-		  \end{lstlisting}
+		
 
 	\item \textbf{Finalization}:
 	      \begin{itemize}
@@ -223,15 +259,45 @@ The GRASP algorithm is implemented as follows:
 		      \item It logs the total time taken and the cost of the solution.
 		      \item Finally, it frees the allocated memory for the remaining nodes array.
 	      \end{itemize}
-		\begin{lstlisting}[language=C]
-			clock_t end_time = clock();
-			double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-			inst->elapsed_time = elapsed_time;
-			inst->best_cost_value = compute_solution_cost(inst, inst->solution);
-		\end{lstlisting}
 \end{enumerate}
 
-The complete code of the imeplementation can be found in the appendix section\ref{appendix:tsp_grasp}.
+Here's the pseudocode of the implementation:
+
+\begin{algorithm}[!ht]
+\caption{TSP GRASP}
+\begin{algorithmic}[1]
+\Procedure{TSP\_GRASP}{instance, solution, alpha}
+\State solution $\gets \emptyset$
+\State candidates $\gets$ \{1, ..., n\} \Comment{Set of unvisited nodes}
+\State current $\gets$ RandomNode(candidates)
+\State solution.Add(current)
+\State Remove(candidates, current)
+
+\While{candidates not empty}
+    \State RCL $\gets \emptyset$ \Comment{Restricted Candidate List}
+    \State $c_{min} \gets$ MinDistance(current, candidates)
+    \State $c_{max} \gets$ MaxDistance(current, candidates)
+    \State threshold $\gets c_{min} + \alpha(c_{max} - c_{min})$
+    
+    \ForAll{node $\in$ candidates}
+        \If{Distance(current, node) $\leq$ threshold}
+            \State RCL.Add(node)
+        \EndIf
+    \EndFor
+    
+    \State next $\gets$ RandomSelect(RCL)
+    \State solution.Add(next)
+    \State Remove(candidates, next)
+    \State current $\gets$ next
+\EndWhile
+
+\State solution.Add(solution[0]) \Comment{Return to starting node}
+\State \Return solution
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
 
 \subsection{Extra Mileage}
 In the extra mileage heuristic, we try to build a valid tsp solution starting an edge of the graph and we try and build a 
@@ -247,32 +313,11 @@ The extra mileage algorithm can be summarized as follows:
 \end{enumerate}
 
 \paragraph{Implementation}
-The extra mileage algoithm imeplementation takes as input arguments:
+The extra mileage algoithm implementation takes as input arguments:
 \begin{itemize}
 	\item \texttt{instance}: The TSP instance data structure.
 	\item \texttt{starting\_pair}: The pair of nodes that will be used to start the tour.
 \end{itemize}
-\begin{lstlisting}[language=C]
-	void tsp_extra_mileage(instance* inst, pair starting_pair);
-\end{lstlisting}
-where the $pair$ data structure is defined as follows:
-\begin{lstlisting}[language=C]
-	typedef struct {
-		int node1;
-		int node2;
-	} pair;
-\end{lstlisting}
-An heuristic state data stcuture is also used to keep track of the covered nodes and the final solution.
-\begin{lstlisting}[language=C]
-	typedef struct
-	{
-		int covered_nodes_count;
-		int* covered_nodes;
-		int uncovered_nodes_count;
-		int* uncovered_nodes;
-	} heuristic_state;
-\end{lstlisting}
-
 Ideally the starting pair should be the most distant pair of nodes in the graph in order to optimize the construction of the solution,
 by design this is not a restriction that has been instrisically implemented into the function, so any pair of nodes can be used as a starting pair.
 The extra mileage algorithm is implemented as follows:
@@ -282,18 +327,6 @@ The extra mileage algorithm is implemented as follows:
 		\item The function initializes the current\_pair to the starting pair (which is passed as an argument).
 		\item An heuristic state data stcuture is initialized to keep the track of the covered nodes and the final solution 
 	\end{itemize}
-	\begin{lstlisting}[language=C]
-		clock_t start_time = clock();
-		heuristic_state state;
-		pair current_pair = starting_pair;
-		initialize_instance(inst, &state);
-		inst->solution[current_pair.node1] = current_pair.node2;
-		inst->solution[current_pair.node2] = current_pair.node1;
-		state.covered_nodes[state.covered_nodes_count++] = current_pair.node1;
-		state.covered_nodes[state.covered_nodes_count++] = current_pair.node2;
-		state.uncovered_nodes[current_pair.node1] = state.uncovered_nodes[--state.uncovered_nodes_count];
-		state.uncovered_nodes[current_pair.node2] = state.uncovered_nodes[--state.uncovered_nodes_count];
-	\end{lstlisting}
 	\item \textbf{Main Loop}:
 	      \begin{itemize}
 		      \item While there are uncovered nodes (condition based on the comparison of the covered nodes count and the total number of nodes), 
@@ -305,69 +338,54 @@ The extra mileage algorithm is implemented as follows:
 						the covered nodes count is incremented and the node is removed from the uncovered nodes list.
 		            \end{itemize}
 	      \end{itemize}
-		  \begin{lstlisting}[language=C]
-			while (state.covered_nodes_count < inst->nnodes)
-			{
-				log_message(LOG_LEVEL_INFO, "Covered nodes count: %d\n", state.covered_nodes_count);
-				solution best_node;
-				for (int i = 0; i < state.covered_nodes_count; i++)
-				{
-					log_message(LOG_LEVEL_INFO, "Current node index: %d\n", i);
-					int current_node = state.covered_nodes[i];
-					int current_node_opposite = inst->solution[current_node];
-					double min_distance_delta = INFINITY;
-					best_node.node = -1;
-					best_node.node_index = -1;
-					for (int j = 0; j < state.uncovered_nodes_count; j++)
-					{
-						double distance1 = euclidean_distance(inst->xcoord[current_node],
-															inst->ycoord[current_node],
-															inst->xcoord[state.uncovered_nodes[j]],
-															inst->ycoord[state.uncovered_nodes[j]], false);
-						double distance2 = euclidean_distance(inst->xcoord[state.uncovered_nodes[j]],
-															inst->ycoord[state.uncovered_nodes[j]],
-															inst->xcoord[current_node_opposite],
-															inst->ycoord[current_node_opposite], false);
-						double existing_pair_distance = euclidean_distance(inst->xcoord[current_node],
-																		inst->ycoord[current_node],
-																		inst->xcoord[current_node_opposite],
-																		inst->ycoord[current_node_opposite], false);
-
-						double distance_delta = distance1 + distance2 - existing_pair_distance;
-
-						if (distance_delta < min_distance_delta)
-						{
-							min_distance_delta = distance_delta;
-							best_node.node = state.uncovered_nodes[j];
-							best_node.node_index = j;
-							best_node.cost = distance_delta;
-						}
-					}
-					if (best_node.node > -1)
-					{
-						log_message(LOG_LEVEL_INFO, "Best node found: %d\n", best_node.node);
-						inst->solution[current_node] = best_node.node;
-						inst->solution[best_node.node] = current_node_opposite;
-						state.covered_nodes[state.covered_nodes_count++] = best_node.node;
-						state.uncovered_nodes[best_node.node_index] = state.uncovered_nodes[--state.uncovered_nodes_count];
-					}
-				}
-    		}
-		  \end{lstlisting}
-
+		
 	\item \textbf{Finalization}:
 	      \begin{itemize}
 		      \item Once all nodes are covered, the function calculates the total cost of the solution.
 		      \item It records the end time and calculates the elapsed time.
 	      \end{itemize}
-		  \begin{lstlisting}[language=C]
-			inst->best_cost_value = compute_solution_cost(inst, inst->solution);
-			clock_t end_time = clock();
-			double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-			inst->elapsed_time = elapsed_time;
-		  \end{lstlisting}
 \end{enumerate}
-the code for the implementation can be found in the appendix section \ref{appendix:tsp_extra_mileage}.
+
+\begin{algorithm}[!ht]
+\caption{TSP Extra Mileage}
+\begin{algorithmic}[1]
+\Procedure{TSP\_ExtraMileage}{instance, solution, start\_pair}
+\State solution $\gets \emptyset$
+\State candidates $\gets$ \{1, ..., n\} \Comment{Set of unvisited nodes}
+\State tour $\gets$ [start\_pair.first, start\_pair.second] \Comment{Initial tour with farthest pair}
+\State Remove(candidates, start\_pair.first)
+\State Remove(candidates, start\_pair.second)
+
+\While{candidates not empty}
+    \State best\_node $\gets$ null
+    \State best\_pos $\gets$ null
+    \State min\_cost $\gets \infty$
+
+    \ForAll{node $\in$ candidates}
+        \ForAll{pos $\in$ \{1, ..., |tour|\}}
+            \State extra\_dist $\gets$ Distance(tour[pos-1], node)
+            \State extra\_dist $\gets$ extra\_dist + Distance(node, tour[pos])
+            \State extra\_dist $\gets$ extra\_dist - Distance(tour[pos-1], tour[pos])
+            
+            \If{extra\_dist < min\_cost}
+                \State min\_cost $\gets$ extra\_dist
+                \State best\_node $\gets$ node
+                \State best\_pos $\gets$ pos
+            \EndIf
+        \EndFor
+    \EndFor
+
+    \State Insert(tour, best\_node, best\_pos)
+    \State Remove(candidates, best\_node)
+\EndWhile
+
+\State solution $\gets$ tour
+\State \Return solution
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
 
 \subsection{Refining Heuristics}
 Refining heuristics are a type of heuristic algorithm that iteratively improve an initial solution by applying a series of local search moves. These can be applied on top of the existing heuristics we have 
@@ -382,11 +400,20 @@ between them.  In particular, let $(i, j), (h, k) \in T$, the 2-opt move replace
 The goal of this type of operation is to swap two "longer" edges for two "shorter" ones (by "longer" and "shorter" we refer to the edge cost): 
 therefore in our refining heuristic we aim at:
 \begin{enumerate}
-	\item Selecting two edges $(i, j), (h, k) \in T$ such that:
-	\begin{equation}
-		c_{G}(i, j) + c_{G}(h, k) > c_{G}(i, h) + c_{G}(j, k)
-		\label{eq:2-opt-move}
-	\end{equation}
+	\item Selecting two edges $(i, j), (h, k) \in T$: for selecting the two edges we can adopt two different strategies:
+	\begin{itemize}
+		\item Select the first pair of edges that satisfy the following:
+		\begin{equation}
+			c_{G}(i, j) + c_{G}(h, k) > c_{G}(i, h) + c_{G}(j, k)
+			\label{eq:2-opt-move}
+		\end{equation}
+		\item Or select the pair of edges in $G$ which swap results in the maximum cost reduction:
+		\begin{equation}
+			\textit{argmax}_{((i, j), (h, k)) \in E \times E} (\Delta c_G = (c_G(i, h) + c_G(j, k)) - (c_G(i, j) + c_G(h, k)))
+			\label{eq:2-opt-move-argmax}
+		\end{equation}
+	\end{itemize}
+	
 	where $c_G(i, j)$ is the cost associated with edge $(i, j)$.
 	\item Replacing the two edges with the edges $(i, h)$ and $(j, k)$.
 	\item If the graph is directed, invert the direction of the tour of the edges between $(j, k)$ and $(i, h)$.
@@ -397,20 +424,60 @@ The 2-opt move implementation takes as input arguments:
 	\item \texttt{instance}: an instance of the TSP problem so solve.
 	\item \texttt{solution}: an instance of a valid TSP solution.
 \end{itemize}
-\begin{lstlisting}[language=C]
-	void tsp_2opt_move(instance* inst, int* solution);
-\end{lstlisting}
 The function is implemented as follows:
 \begin{enumerate}
 	\item \textbf{Main loop:} 
 	\begin{itemize}
-	\item The function iterates over all edges in the solution to find a valid 2-opt move. This is identified by the pair of edges that satisfy (\ref{eq:2-opt-move})
+	\item The function iterates over all edges in the solution to find a valid 2-opt move. In this implementations, this is identified by the pair of edges that satisfy (\ref{eq:2-opt-move-argmax})
 	\item If a valid 2-opt move is found, the pair is saved as the designated edges to be swapped.
 	\end{itemize}
 	\item \textbf{Swap:} We apply the 2-opt move on the solution by swapping the designated edges.
 	\item \textbf{Finalization:} We invert the direction of the edges between $(j, k)$ and $(i, h)$ if the graph is directed.
 \end{enumerate}
+here is the pseudocode of the implementation:
+\begin{algorithm}[!ht]
+\caption{TSP 2-opt Local Search}
+\begin{algorithmic}[1]
+\Procedure{TSP\_TwoOpt}{instance, solution}
+\State improved $\gets$ true
+\While{improved}
+    \State improved $\gets$ false
+    \State best\_gain $\gets$ 0
+    \State best\_i $\gets$ -1
+    \State best\_j $\gets$ -1
+
+    \For{i $\gets$ 0 \textbf{to} n-2}
+        \For{j $\gets$ i+1 \textbf{to} n-1}
+            \State gain $\gets$ CalculateTwoOptGain(i, j)
+            \If{gain < best\_gain}
+                \State best\_gain $\gets$ gain
+                \State best\_i $\gets$ i
+                \State best\_j $\gets$ j
+                \State improved $\gets$ true
+            \EndIf
+        \EndFor
+    \EndFor
+
+    \If{improved}
+        \State ReversePath(solution, best\_i+1, best\_j)
+    \EndIf
+\EndWhile
+
+\State \Return solution
+\EndProcedure
+
+\Function{CalculateTwoOptGain}{i, j}
+    \State old\_dist $\gets$ Distance(tour[i], tour[i+1])
+    \State old\_dist $\gets$ old\_dist + Distance(tour[j], tour[j+1])
+    \State new\_dist $\gets$ Distance(tour[i], tour[j])
+    \State new\_dist $\gets$ new\_dist + Distance(tour[i+1], tour[j+1])
+    \State \Return new\_dist - old\_dist
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
 \newpage
+
 \section{Neighbourhood Search Heuristics}
 Neighbourhood serach algorithms are a family of algorithms whose search strategy is based moving from one neighbour solution to another. These neighbours are 
 
@@ -427,79 +494,62 @@ which can help the algorithm escape local optima and explore new regions of the 
 The Tabu search algorithm can be summarized as follows:
 \begin{enumerate}
     \item \textbf{Initialization:} Initialize the tabu list and the best solution found.
-    \begin{lstlisting}
-		int** tabu_list = (int**)malloc(TABU_TENURE * sizeof(int*));
-		for (int i = 0; i < TABU_TENURE; i++)
-		{
-			tabu_list[i] = (int*)malloc(size * sizeof(int));
-		}
-		int tabu_index = 0;
-	\end{lstlisting}
     \item \textbf{Setup:} Initialize the current solution and the current iteration count.
-    \begin{lstlisting}
-		Solution best_solution;
-		best_solution.solution = (int*)malloc(size * sizeof(int));
-		memcpy(best_solution.solution, initial_solution, size * sizeof(int));
-		best_solution.cost = compute_solution_cost(inst, best_solution.solution);
-		Solution current_solution = best_solution;
-	\end{lstlisting}
     \item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
           \begin{itemize}
               \item Generate a set of candidate solutions by applying a set of moves to the current solution.
-              \begin{lstlisting}
-				int num_neighbors = size;
-				int** neighbours = (int**)malloc(num_neighbors * sizeof(int*));
-				for (int i = 0; i < num_neighbors; i++)
-				{
-					neighbours[i] = (int*)malloc(size * sizeof(int));
-				}
-				generate_neighbors(current_solution.solution, size, neighbours, num_neighbors);
-			  \end{lstlisting}
               \item Select the best candidate solution that is not in the tabu list.
-              \begin{lstlisting}
-				Solution best_neighbor;
-				best_neighbor.solution = NULL;
-				best_neighbor.cost = INT_MAX;
-
-				for (int i = 0; i < num_neighbors; i++)
-				{
-					int cost = evaluate_solution(neighbours[i], size);
-					if (cost < best_neighbor.cost && !is_tabu(neighbours[i], tabu_list, TABU_TENURE, size))
-					{
-						best_neighbor.solution = neighbours[i];
-						best_neighbor.cost = cost;
-					}
-				}
-			  \end{lstlisting}
               \item Update the tabu list with the selected solution.
-              \begin{lstlisting}
-				if (best_neighbor.solution != NULL)
-				{
-					current_solution = best_neighbor;
-					if (current_solution.cost < best_solution.cost)
-					{
-						best_solution = current_solution;
-					}
-					add_to_tabu_list(current_solution.solution, tabu_list, &tabu_index, size);
-				}
-			  \end{lstlisting}
               \item Update the current solution with the selected solution.
               \item If the selected solution is better than the best solution found, update the best solution.
               \item Increment the iteration count.
           \end{itemize}
     \item \textbf{Finalization:} Return the best solution found.
-    \begin{lstlisting}
-		inst->best_cost_value = compute_solution_cost(inst, best_solution.solution);
-		log_message(LOG_LEVEL_INFO, "Best solution cost: %d\n", best_solution.cost);
-		memcpy(inst->solution, best_solution.solution, size * sizeof(int));
-
-		clock_t end_time = clock();
-		double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-		inst->elapsed_time = elapsed_time;
-		log_message(LOG_LEVEL_INFO, "Tabu Search solution time: %f seconds\n", elapsed_time);
-		log_message(LOG_LEVEL_INFO, "Tabu Search solution cost: %f\n", best_solution.cost);
-	\end{lstlisting}
 \end{enumerate}
+
+
+\begin{algorithm}[!ht]
+\caption{TSP Tabu Search}
+\begin{algorithmic}[1]
+\Procedure{TSP\_TabuSearch}{instance, initial\_solution, tabu\_size}
+\State best\_solution $\gets$ initial\_solution
+\State best\_cost $\gets$ ComputeCost(best\_solution)
+\State current\_solution $\gets$ initial\_solution
+\State tabu\_list $\gets$ EmptyQueue(tabu\_size)
+\State iterations $\gets$ 0
+
+\While{iterations < MAX\_ITERATIONS}
+    \State best\_move $\gets$ null
+    \State best\_gain $\gets \infty$
+    
+    \ForAll{i, j $\in$ PossibleMoves(current\_solution)}
+        \If{(i, j) $\notin$ tabu\_list \textbf{or} AspirationCriteria()}
+            \State gain $\gets$ CalculateSwapGain(i, j)
+            \If{gain < best\_gain}
+                \State best\_gain $\gets$ gain
+                \State best\_move $\gets$ (i, j)
+            \EndIf
+        \EndIf
+    \EndFor
+    
+    \State ApplyMove(current\_solution, best\_move)
+    \State current\_cost $\gets$ ComputeCost(current\_solution)
+    \State AddToTabuList(tabu\_list, best\_move)
+    
+    \If{current\_cost < best\_cost}
+        \State best\_solution $\gets$ current\_solution
+        \State best\_cost $\gets$ current\_cost
+    \EndIf
+    
+    \State iterations $\gets$ iterations + 1
+\EndWhile
+
+\State \Return best\_solution
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
 
 \subsection{Variable Neighbourhood Search}
 The Variable Neighbourhood Search (VNS) heuristic is a metaheuristic that combines local search with a systematic change of neighbourhood structures. 
@@ -515,16 +565,6 @@ In our imeplementation we will go over the General VNS scheme, in which the neig
 The VNS algorithm can be summarized as follows:
 \begin{enumerate}
 	\item \textbf{Initialization:} Initialize the current solution and the best solution found.
-	\begin{lstlisting}
-		int* current_solution = (int*)malloc(inst->nnodes * sizeof(int));
-		memcpy(current_solution, initial_solution, inst->nnodes * sizeof(int));
-		bool stop_criterion = true;
-		int iterations_without_improvement = 0;
-		const int max_iterations = 100;
-		const int time_limit_milliseconds = 3600;
-		const int max_stuck_iterations = 10;
-		double best_solution_cost = compute_solution_cost(inst, current_solution);
-	\end{lstlisting}
 	\item \textbf{Setup:} Initialize the neighbourhood structure and the current iteration count.
 	\item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
 		  \begin{itemize}
@@ -537,7 +577,53 @@ The VNS algorithm can be summarized as follows:
 		  \end{itemize}
 	\item \textbf{Finalization:} Return the best solution found.
 \end{enumerate}
+\begin{algorithm}
+\caption{TSP Variable Neighborhood Search}
+\begin{algorithmic}[1]
+\Procedure{TSP\_VNS}{instance, initial\_solution, k\_max}
+\State best\_solution $\gets$ initial\_solution
+\State best\_cost $\gets$ ComputeCost(best\_solution)
+\State k $\gets$ 1
 
+\While{k $\leq$ k\_max}
+    \State current\_solution $\gets$ best\_solution
+    \State // Shaking phase
+    \State current\_solution $\gets$ Shake(current\_solution, k)
+    
+    \State // Local search phase
+    \State improved $\gets$ true
+    \While{improved}
+        \State improved $\gets$ false
+        \State neighbor $\gets$ LocalSearch(current\_solution, k)
+        \State neighbor\_cost $\gets$ ComputeCost(neighbor)
+        
+        \If{neighbor\_cost < ComputeCost(current\_solution)}
+            \State current\_solution $\gets$ neighbor
+            \State improved $\gets$ true
+        \EndIf
+    \EndWhile
+
+    \If{ComputeCost(current\_solution) < best\_cost}
+        \State best\_solution $\gets$ current\_solution
+        \State best\_cost $\gets$ ComputeCost(current\_solution)
+        \State k $\gets$ 1
+    \Else
+        \State k $\gets$ k + 1
+    \EndIf
+\EndWhile
+
+\State \Return best\_solution
+\EndProcedure
+
+\Function{Shake}{solution, k}
+    \For{i $\gets$ 1 \textbf{to} k}
+        \State pos1, pos2 $\gets$ RandomPositions(solution.length)
+        \State SwapNodes(solution, pos1, pos2)
+    \EndFor
+    \State \Return solution
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 \newpage
 \section{TSP with CPLEX}
 
@@ -949,7 +1035,5 @@ In our case, we can express the constraint as follows:
 
 \bibliographystyle{alpha}
 \bibliography{sample}
-
-\include{appendix}
 
 \end{document}
