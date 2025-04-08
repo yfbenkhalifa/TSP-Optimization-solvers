@@ -146,3 +146,19 @@ TEST(TspTests, VnsTest) {
     EXPECT_GT(final_cost, 0); // Ensure the cost is positive
     EXPECT_LE(final_cost, greedy_final_cost); // Ensure the cost is less than or equal to the greedy solution
 }
+
+TEST(TspTests, SimulatedAnnealing)
+{
+    instance inst = read_instance();
+    Solution *initial_solution = (Solution*)malloc(sizeof(Solution));
+    Solution *final_solution = (Solution*)malloc(sizeof(Solution));
+    initial_solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
+    final_solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
+    tsp_grasp(&inst, initial_solution, 0);
+    double greedy_final_cost = compute_solution_cost(&inst, initial_solution->solution);
+    tsp_simulated_annealing(&inst, final_solution, initial_solution);
+    EXPECT_EQ(is_tsp_solution(&inst, final_solution->solution), true);
+    double final_cost = compute_solution_cost(&inst, final_solution->solution);
+    EXPECT_GT(final_cost, 0); // Ensure the cost is positive
+    EXPECT_LE(final_cost, greedy_final_cost); // Ensure the cost is less than or equal to the greedy solution
+}

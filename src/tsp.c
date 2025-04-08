@@ -215,40 +215,88 @@ bool is_2opt_neighbour(int* solution1, int* solution2, int size)
 
 void tsp_simulated_annealing(instance* instance, Solution* solution, Solution *initial_solution)
 {
-    Solution *current_solution = (Solution*)malloc(sizeof(Solution));
+    clock_t start_time = clock();
+    log_message(LOG_LEVEL_INFO, "Solving TSP with Simulated Annealing\n");
+    log_message(LOG_LEVEL_INFO, "Instance details: nnodes = %d\n", instance->nnodes);
 
-    memcpy(current_solution, initial_solution, sizeof(Solution));
+    Solution *current_solution = (Solution*)malloc(sizeof(Solution));
+    current_solution->solution = (int*)malloc(instance->nnodes * sizeof(int));
+
+    memcpy(current_solution->solution, initial_solution->solution, instance->nnodes * sizeof(int));
     double current_cost = initial_solution->cost;
-    int max_iterations = 100;
-    for (int i=0; i<max_iterations; i++)
+    double best_cost = current_cost;
+
+    // Store best solution found
+    int *best_solution = (int*)malloc(instance->nnodes * sizeof(int));
+    memcpy(best_solution, initial_solution->solution, instance->nnodes * sizeof(int));
+
+    int max_iterations = 1000;
+    double initial_temperature = 100.0;
+    double cooling_rate = 0.95;
+    double temperature = initial_temperature;
+
+    log_message(LOG_LEVEL_INFO, "Starting with initial cost: %f\n", current_cost);
+    log_message(LOG_LEVEL_INFO, "Initial temperature: %f\n", temperature);
+
+    for (int i = 0; i < max_iterations; i++)
     {
-        int *next_solution = (int*)malloc(sizeof(Solution));
-        do
-        {
+        if (i % 100 == 0) {
+            log_message(LOG_LEVEL_INFO, "Iteration %d, temperature: %f, current cost: %f\n",
+                         i, temperature, current_cost);
+        }
+
+        int *next_solution = (int*)malloc(instance->nnodes * sizeof(int));
+        do {
             random_solution(instance, next_solution);
-        }while (!is_tsp_solution(instance, next_solution));
+        } while (!is_tsp_solution(instance, next_solution));
+
         double new_solution_cost = compute_solution_cost(instance, next_solution);
+
         if (new_solution_cost < current_cost)
         {
-            memcpy(current_solution, next_solution, sizeof(Solution));
+            memcpy(current_solution->solution, next_solution, instance->nnodes * sizeof(int));
             current_cost = new_solution_cost;
+
+            // Update best solution if improved
+            if (new_solution_cost < best_cost) {
+                best_cost = new_solution_cost;
+                memcpy(best_solution, next_solution, instance->nnodes * sizeof(int));
+                log_message(LOG_LEVEL_INFO, "New best solution found! Cost: %f\n", best_cost);
+            }
         }
         else
         {
             double delta = new_solution_cost - current_cost;
-            double probability = exp(-delta / i);
+            double probability = exp(-delta / temperature);
             double random_number = (double)rand() / RAND_MAX;
+
             if (random_number < probability)
             {
-                memcpy(current_solution, next_solution, instance->nnodes * sizeof(int));
+                memcpy(current_solution->solution, next_solution, instance->nnodes * sizeof(int));
                 current_cost = new_solution_cost;
+                log_message(LOG_LEVEL_DEBUG, "Accepted worse solution with probability %f\n", probability);
             }
         }
+
         free(next_solution);
+        temperature *= cooling_rate;
     }
+
+    // Use the best solution found
+    memcpy(solution->solution, best_solution, instance->nnodes * sizeof(int));
+    solution->cost = best_cost;
+    instance->best_cost_value = best_cost;
+
+    clock_t end_time = clock();
+    double elapsed_time = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    instance->elapsed_time = elapsed_time;
+
+    log_message(LOG_LEVEL_INFO, "Simulated Annealing completed in %f seconds\n", elapsed_time);
+    log_message(LOG_LEVEL_INFO, "Final solution cost: %f\n", best_cost);
+
+    free(best_solution);
+    free(current_solution->solution);
     free(current_solution);
-
-
 }
 
 void tsp_extra_mileage(instance* inst, Solution *solution, pair starting_pair)
