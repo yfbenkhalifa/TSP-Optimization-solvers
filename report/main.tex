@@ -288,7 +288,7 @@ These data structures are designed to balance memory efficiency with computation
 
 \newpage
 
-\section{Metaheuristics for TSP}
+\section{Heuristics for TSP}
 Metaheuristics represent a sophisticated class of computational methods that have evolved to address complex optimization problems where exact methods become impractical due to computational constraints. 
 As optimization problems grow in scale and complexity, traditional exact methods often struggle with the combinatorial explosion of possible solutions. 
 Metaheuristics emerged as an effective approach to navigate these vast solution spaces by intelligently balancing exploration of new regions with exploitation of promising areas.
@@ -297,29 +297,8 @@ In this section we will go over a brief history of the development of the metahe
 	\item Greedy Randomized Adaptive Search (GRASP)
 	\item Extra Mileage
 	\item Refining Heuristics (2-opt move)
-	\item Tabu Search
-	\item Variable Neighborhood Search (VNS)
 \end{itemize}
 for each algorihtm you will see the pseudocode for both the algorithm and the implementation of the algorithm in C.
-\subsection{Historical Development}
-Metaheuristics emerged in the 1970s and 1980s as researchers sought more effective ways to solve complex combinatorial optimization problems. 
-The field began with simple local search methods and gradually evolved into more sophisticated approaches. Several key developments marked this evolution:
-
-\begin{itemize}
-	\item \textbf{1950s-1960s}: Early construction heuristics like the Nearest Neighbor algorithm and Christofides algorithm were developed specifically for TSP.
-	
-	\item \textbf{1970s}: The 2-opt and 3-opt local search methods by Lin and Kernighan became fundamental building blocks for many modern metaheuristics.
-	
-	\item \textbf{1980s}: Simulated Annealing, inspired by physical annealing processes in metallurgy, introduced the concept of probabilistic acceptance of worse solutions.
-	
-	\item \textbf{1986}: The introduction of Tabu Search by Fred Glover marked a significant advancement, incorporating memory structures to guide the search process.
-	
-	\item \textbf{1990s}: Population-based methods like Genetic Algorithms and Ant Colony Optimization brought new perspectives to TSP solution approaches.
-	
-	\item \textbf{2000s}: Hybrid metaheuristics emerged, combining multiple approaches to leverage their respective strengths.
-\end{itemize}
-
-These developments have led to increasingly sophisticated algorithms capable of finding high-quality solutions to large-scale TSP instances efficiently.
 
 
 \subsection{Greedy Randomized Adaptive Search (GRASP)}
@@ -346,9 +325,9 @@ The GRASP algorithm can be summarized as follows:
 	\item \textbf{Local Search:} Improve the constructed solution using local search.
 	\item \textbf{Update:} If the improved solution is better than the best solution found, update the best solution.
 	\item \textbf{Termination:} Repeat steps 2-4 until a stopping criterion is met (e.g., a maximum number of iterations).
-    \item 
 \end{enumerate}
 
+\newpage
 \begin{algorithm}[!ht]
 \caption{TSP GRASP Metaheuristic}
 \begin{algorithmic}[1]
@@ -507,6 +486,8 @@ The extra mileage algorithm is implemented as follows:
 	      \end{itemize}
 \end{enumerate}
 
+\newpage
+
 \begin{algorithm}[!ht]
 \caption{TSP Extra Mileage}
 \begin{algorithmic}[1]
@@ -595,7 +576,7 @@ The function is implemented as follows:
 	\item \textbf{Swap:} We apply the 2-opt move on the solution by swapping the designated edges.
 	\item \textbf{Finalization:} We invert the direction of the edges between $(j, k)$ and $(i, h)$ if the graph is directed.
 \end{enumerate}
-here is the pseudocode of the implementation:
+\newpage
 \begin{algorithm}[!ht]
 \caption{TSP 2-opt Local Search}
 \begin{algorithmic}[1]
@@ -639,8 +620,32 @@ here is the pseudocode of the implementation:
 
 \newpage
 
-\section{Neighbourhood Search Heuristics}
-Neighbourhood serach algorithms are a family of algorithms whose search strategy is based moving from one neighbour solution to another. These neighbours are 
+\section{Metaheuristics for the TSP}
+Metaheuristics represent a sophisticated evolution from classical heuristic approaches in solving the Traveling Salesman Problem (TSP). 
+While traditional heuristics typically follow a fixed set of rules to construct or improve solutions, metaheuristics employ more dynamic 
+and adaptive strategies to explore the solution space effectively.
+
+The key distinctions between classical heuristics and metaheuristics are:
+
+\begin{itemize}
+	\item \textbf{Search Strategy}: Classical heuristics often follow a deterministic path, while metaheuristics incorporate randomization and adaptive mechanisms to escape local optima.
+	
+	\item \textbf{Solution Quality}: Traditional heuristics may get stuck in local optima, whereas metaheuristics employ various techniques (like perturbation or memory structures) to find better solutions.
+	
+	\item \textbf{Computational Complexity}: Classical heuristics typically have lower computational requirements but may produce inferior solutions compared to metaheuristics.
+	
+	\item \textbf{Flexibility}: Metaheuristics can be adapted to various problem types and instances, while classical heuristics are often problem-specific.
+\end{itemize}
+
+Common metaheuristic approaches for the TSP include:
+\begin{itemize}
+	\item \textbf{Tabu Search}: Uses memory structures to avoid revisiting recent solutions
+	\item \textbf{Variable Neighborhood Search}: Systematically changes neighborhood structures to escape local optima
+	\item \textbf{Simulated Annealing}: Employs probabilistic acceptance of worse solutions
+	\item \textbf{Genetic Algorithms}: Evolves solutions through selection and recombination operations
+\end{itemize}
+
+These methods have proven particularly effective for large-scale TSP instances where exact methods become computationally infeasible.
 
 \subsection{Tabu Search}
 The Tabu search is a type of neighborhood search algorithm. 
@@ -786,29 +791,140 @@ The VNS algorithm can be summarized as follows:
 \end{algorithmic}
 \end{algorithm}
 \newpage
-\section{TSP with CPLEX}
 
-\subsection{Brief introduction to CPLEX}
+\subsection{Simulated Annealing}
+Simulated Annealing (SA) is a probabilistic optimization algorithm inspired by the annealing process in metallurgy.
+The algorithm is designed to find an approximate solution to optimization problems by exploring the solution space in a way that allows for both exploration and exploitation.
+The key idea behind SA is to allow the algorithm to accept worse solutions with a certain probability,
+which helps it escape local optima and explore the solution space more effectively.
+\paragraph{Algorithm}
+The Simulated Annealing algorithm can be summarized as follows:
+\begin{enumerate}
+	\item \textbf{Initialization:} Initialize the current solution, temperature, and cooling schedule.
+	\item \textbf{Main Loop:} Repeat the following steps until a stopping criterion is met:
+	      \begin{itemize}
+		      \item Generate a new solution by applying a perturbation to the current solution.
+		      \item Calculate the cost of the new solution.
+		      \item If the new solution is better than the current solution, accept it.
+		      \item If the new solution is worse than the current solution, accept it with a certain probability based on the temperature.
+		      \item Update the temperature according to the cooling schedule.
+	      \end{itemize}
+	\item \textbf{Finalization:} Return the best solution found.
+\end{enumerate}
+
+
+\begin{algorithm}[!ht]
+	\caption{Simulated Annealing for TSP}
+	\begin{algorithmic}[1]
+	\Procedure{SimulatedAnnealing}{instance, initial\_solution}
+	\State $current\_solution \gets initial\_solution$
+	\State $current\_cost \gets ComputeCost(current\_solution)$
+	\State $best\_solution \gets current\_solution$
+	\State $best\_cost \gets current\_cost$
+	\State $temperature \gets initial\_temperature$
+	\State $cooling\_rate \gets 0.95$
+	\State $max\_iterations \gets 1000$
+	
+	\For{$i = 1$ to $max\_iterations$}
+		\State Generate a random valid TSP solution $next\_solution$
+		\State $new\_cost \gets ComputeCost(next\_solution)$
+		
+		\If{$new\_cost < current\_cost$}
+			\State $current\_solution \gets next\_solution$
+			\State $current\_cost \gets new\_cost$
+			
+			\If{$new\_cost < best\_cost$}
+				\State $best\_solution \gets next\_solution$
+				\State $best\_cost \gets new\_cost$
+			\EndIf
+		\Else
+			\State $delta \gets new\_cost - current\_cost$
+			\State $probability \gets e^{-delta / temperature}$
+			\State $random \gets$ Random number between 0 and 1
+			
+			\If{$random < probability$}
+				\State $current\_solution \gets next\_solution$
+				\State $current\_cost \gets new\_cost$
+			\EndIf
+		\EndIf
+		
+		\State $temperature \gets temperature \times cooling\_rate$
+	\EndFor
+	
+	\State \Return $best\_solution$
+	\EndProcedure
+	\end{algorithmic}
+	\end{algorithm}
+
+\section{TSP with CPLEX}
+Given the popularity of the TSP problem in the mathematical optimization field and the growing necessity to solve larger and larger instances of the problem,
+optimzation softwares and libraries have started to establish themselves as a reliable approach to  solve an instance of the tsp problem efficiently by exploting 
+leveraging available computation power. One of the most popular and commonly used is CPLEX, a commercial optimization solver developed by IBM.\@
 CPLEX is a high-performance optimization solver developed by IBM that can be used to solve linear programming (LP), mixed-integer programming (MIP), and quadratic programming (QP) problems.
 It provides a powerful API that allows users to model and solve optimization problems in a variety of programming languages, including C, C++, Java, and Python.
 
-In our case we will be using the C API to model and solve the TSP problem using CPLEX. The CPLEX C API provides a set of functions that allow users to create and manipulate optimization models, 
+\subsection{History of CPLEX}
+CPLEX, named after the C programming language and the simplex method, was initially developed by Robert Bixby in 1988. 
+It began as an implementation of the simplex algorithm for linear programming written in C. The software was first commercialized through CPLEX Optimization Inc., founded by Bixby.
+
+In 1997, ILOG acquired CPLEX Optimization Inc., leading to significant expansions in the solver's capabilities. 
+Under ILOG, CPLEX evolved to handle more complex problem types including mixed-integer programming, quadratic programming, 
+and constraint programming.
+
+IBM acquired ILOG in 2009, rebranding the software as IBM ILOG CPLEX Optimization Studio. Under IBM's stewardship, CPLEX has 
+continued to evolve with enhanced performance, parallel processing capabilities, and integration with modern programming environments.
+
+Today, CPLEX remains one of the leading commercial optimization solvers, widely used in both industry and academia for solving 
+large-scale mathematical programming problems.
+In our case we will be using the C API to model and solve the TSP problem using CPLEX. The CPLEX C API provides a set of functions 
+that allow users to create and manipulate optimization models, 
 set parameters, and solve the models.
 
 \subsection{Modeling the TSP with CPLEX}
-To model the TSP with CPLEX, we need to define the decision variables, constraints, and objective function of the problem. 
-The decision variables represent the edges of the graph, and the constraints ensure that each node is visited exactly once in the tour.
-The objective function is to minimize the total cost of the tour.
+The main goal here is to exploit the power of the CPLEX library to solve instances of the TSP problem as efficiently as possibile. 
+To model the TSP with CPLEX we first start from its MIP formulation:
+
+\begin{align}
+	& \min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij} \\
+	\text{subject to: } & \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1,\ldots,n\} \\
+	& \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1,\ldots,n\} \\
+	& \sum_{i,j \in S} x_{ij} \leq |S|-1 \quad \forall S \subset V, S \neq \emptyset \\
+	& x_{ij} \in \{0,1\} \quad \forall i,j \in \{1,\ldots,n\}
+\end{align}
+
+where:
+\begin{itemize}
+	\item $x_{ij}$ is a binary variable equal to 1 if edge $(i,j)$ is in the tour, 0 otherwise
+	\item $c_{ij}$ is the cost of edge $(i,j)$
+	\item $S$ represents any proper subset of nodes
+	\item The third constraint eliminates subtours
+\end{itemize}
+
+Therefore, in order to solve a TSP instance using CPLEX we first need to model the problem using the CPLEX API.
+The CPLEX API provides a set of functions that allow us to create and manipulate optimization models, set parameters, and solve the models.
+The following sections will go over the main steps to model and solve a TSP instance using CPLEX, in which for each paragraph we will also reference 
+the CPLEX API documentation, along with a code snippet directly from the implementation. 
 
 \paragraph{CPLEX Environment}
 The first step in using CPLEX is to create an environment object that will be used to manage the optimization process.
-The environment object is created using the \texttt{CPXopenCPLEX} function, which returns a pointer to the CPLEX environment.
+The environment object is created using the \texttt{CPXopenCPLEX} function, which returns a pointer to the CPLEX environment.~\cite{cplex_api}
 
 \begin{lstlisting}[language=C]
 	CPXENVptr env = CPXopenCPLEX(&status);
 \end{lstlisting}
 
+
 \paragraph{Decision Variables}
+Decision variables are the unknowns in your optimization problem that CPLEX needs to determine. In the TSP context: 
+\begin{itemize}
+	\item Each $x_ij$ variable represents whether edge $(i,j)$ is included in the tour
+	\item Binary variables (0 or 1) where:
+	\begin{itemize}
+		\item $x_ij = 1$ means edge $(i,j)$ is in the tour
+		\item $x_ij = 0$ means edge $(i,j)$ is not in the tour
+	\end{itemize}
+\end{itemize}
+
 To define decision variables in the CPLEX environment we use the \texttt{CPXnewcols} function, which creates a set of new columns (variables) in the model.
 Each variable represents an edge in the graph and is binary (0 or 1) to indicate whether the edge is included in the tour.
 \begin{lstlisting}[language=C]
@@ -826,6 +942,30 @@ Each variable represents an edge in the graph and is binary (0 or 1) to indicate
 	}
 	status = CPXnewcols(env, lp, num_edges, NULL, lb, ub, xctype, colnames);
 \end{lstlisting}
+
+\paragraph{Constraints}
+Constraints are the conditions that the solution must satisfy. In the TSP context:
+\begin{itemize}
+	\item Each node must be visited exactly once
+	\item The subtour elimination constraints ensure that the solution is a valid tour
+\end{itemize}
+To add constraints to the CPLEX model, we use the \texttt{CPXaddrows} function, which adds a set of rows (constraints) to the model.
+\begin{lstlisting}
+	int error = CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense,&izero,index,coefficients, NULL, &rname);
+\end{lstlisting}
+To the \texttt{CPLXaddrows} function we pass the usual arguments spcifying the CPLEX environment and pointer, along with the following arguments:
+\begin{itemize}
+	\item \texttt{non\_zero\_variables\_count}: The number of non-zero variables in the constraints
+	\item \texttt{right\_hand\_side\_value}: The array representing right-hand side value of the constraints
+	\item \texttt{constraint\_sense}: The sense of the constraints (e.g., less than or equal to, greater than or equal to, equal to)
+	\item \texttt{izero}: The index of the first variable in the constraint
+	\item \texttt{index}: The array of variable indices in the constraint
+	\item \texttt{coefficients}: The array of coefficients for each variable in the constraint
+	\item \texttt{rname}: The name of the constraint
+\end{itemize}
+
+With the steps listed above we have successfully modeled a generic MIP problem into CPLEX, but this does not correctly represent the TSP problem. 
+For that we still need to model the subtour elimination constraints into the model.
 
 \subsection{Bender's subtour elimination method} 
 Up until this point we have just modelled a generic integer linear problem into cplex, but this does not solve the TSP problem.
