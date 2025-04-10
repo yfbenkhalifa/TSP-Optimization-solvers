@@ -1152,40 +1152,86 @@ respectively.
 
 Mathheuristics algorithms are meant ot be used in concatenation with a "black box" solver, meaning that these algorithms are not directly implemented directly into the solver, but thery are 
 applied onto the input instance that is about to be fed into the solver. The idea is to improve the overall performance of the solver by optimizing the search space for solver to explore.\cite{Fischetti2016Matheuristics}
-
+\newpage
 \subsection{Hard Fixing Mathheuristic}
-The idea behind Fixed Branching is to optimize the solution space search by adding a set of constraints to the model that restrict the 
-search space to a local region around the current solution. These constraints are designed to select a random subset of edges in the current solution, 
-so as to create a restricted neighborhood of feasible solutions. 
-This allows the solver to explore a smaller search space and potentially find better solutions faster. 
+Hard Fixing is a mathheuristic approach that strategically restricts the solution space by fixing a
+subset of decision variables to their current values. This technique aims to make large-scale 
+optimization problems more tractable by reducing the effective search space while maintaining solution quality.
 
 \subparagraph{Algorithm}
 The Hard Fixing algorithm can be summarized as follows: 
 \begin{enumerate}
-	\item fix a small random probability $\rho \in (0, 1)$ (i.e. for the implementation we went for $\rho = 0.3$);
-	\item extract the subset of edges to be fixed based on the probability $\rho$: these edges are again selected at random from the subset of edges that are not selected in the current solution;
-	\begin{equation}
-		\bar{\mathcal{S}} = \{ (i, j) \in \mathcal{S} : (i, j) = 0, |\bar{\mathcal{S}}| = \rho |\mathcal{B}|\}
-	\end{equation}
-	where $\mathcal{S} \subseteq \mathcal{B}$ and $\mathcal{B}$ is the set of binary variables. 
-	To put it in words, we want to select a subset of edges that are not selected in the current solution, and we want to fix them to 1 with a probability $\rho$.
-	\item add constraints to the model to fix the selected subset of edges to 1.
+	\item Select a probability parameter $p_{fix} \in (0, 1)$ that determines what fraction of variables to fix
+	\item Given a current feasible solution $x^*$, identify the set of all binary variables $\mathcal{B}$
+	\item For each variable $x_j \in \mathcal{B}$:
+		\begin{itemize}
+			\item Generate a random number $r \in [0,1]$
+			\item If $r < p_{fix}$, fix variable $x_j$ to its current value $x^*_j$
+		\end{itemize}
+	\item Solve the restricted problem with the fixed variables
+	\item If the solution improves, update the best known solution
 \end{enumerate}
-This process is repeated every time a new integer feasible solution is found, and the constraints are added to the model to restrict the search space. It is implicitly 
-understood that the local branching constraints are reset at every iteration of the algorithm. 
+
+The key idea is that by fixing a portion of the variables, we create a simpler subproblem that can be solved more efficiently while still exploring promising regions of the solution space.
 
 \subparagraph{Implementation}
-The algorithm is implemented using the CPLEX Callback functionality, which allows us to add constraints to the model during the optimization process. Every time a new integer feasible solution is found, the callback function is called, 
-and we can add constraints to the model to restrict the search space. 
-In the callback function, the cplex\_hard\_fixing function is called, which fixes a subset of variables in the model based on a given probability p\_fix.
+The implementation uses CPLEX's callback functionality to dynamically apply hard fixing during the optimization process:
 
-The function does the following:
 \begin{enumerate}
-	\item \textbf{Update incumbent}: Get the current solution from the callback context
-	\item \textbf{Restore to original instance}: Reset the bounds of all variables to their original values (0.0 to 1.0).
-	\item Fix a subset of variables based on the given probability p\_fix.
-	\item Apply the fixing by adding constraints to the model.
+	\item \textbf{Initialization}:
+		\begin{itemize}
+			\item Set up the callback context to track the current solution
+			\item Initialize the fixing probability $p_{fix}$ (typically 0.2 to 0.4)
+		\end{itemize}
+	
+	\item \textbf{Variable Fixing}:
+		\begin{itemize}
+			\item For each binary variable in the model:
+				\begin{itemize}
+					\item Generate a random number
+					\item If selected for fixing, add a constraint to fix its value
+				\end{itemize}
+			\item Track the number of fixed variables
+		\end{itemize}
+		
+	\item \textbf{Subproblem Solution}:
+		\begin{itemize}
+			\item Solve the restricted problem with fixed variables
+			\item Update the best solution if improved
+			\item Remove fixing constraints for the next iteration
+		\end{itemize}
 \end{enumerate}
+
+The actual implementation involves careful management of CPLEX's optimization environment and proper handling of variable bounds and constraints:
+
+
+\begin{algorithm}[!ht]
+	\caption{Hard Fixing Heuristic}
+	\begin{algorithmic}[1]
+	\Procedure{HardFixing}{instance, solution, p\_fix}
+	\State Initialize random seed
+	\State Get the current solution from the solver
+	
+	\State Reset all variables to their original bounds
+	
+	\State $fix\_count \gets 0$
+	\For{each variable $i$ in the problem}
+		\If{random() $<$ $p\_fix$}
+			\State Fix variable $i$ to its current value in the solution
+			\State $fix\_count \gets fix\_count + 1$
+		\EndIf
+	\EndFor
+	
+	\If{$fix\_count > 0$}
+		\State Resolve the problem with the fixed variables
+	\EndIf
+	
+	\State \Return new solution
+	\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\newpage
 
 \subsection{Local Branching}
 As for the Hard fixing heuristic, the Local branching algorihtm is meant to be used with a heuristic black TSP solver to optimize its performance.
