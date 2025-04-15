@@ -13,7 +13,7 @@
     backgroundcolor=\color{codegray},
     basicstyle=\ttfamily\footnotesize,
     keywordstyle=\color{codeblue},
-    commentstyle=\color{green},
+    commentstyle=\color{red},
     stringstyle=\color{red},
     basicstyle=\ttfamily\footnotesize,
     breakatwhitespace=false,         
@@ -38,18 +38,28 @@
 
 % Set page size and margins
 % Replace `letterpaper' with `a4paper' for UK/EU standard size
-\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=4cm,right=4cm,marginparwidth=1.75cm]{geometry}
 
 % Useful packages
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 
+
 \title{Operations Reserach 2 Final Thesis}
 \author{Youssef Ben Khalifa}
 
 \begin{document}
 \maketitle
+
+\tableofcontents
+
+\cleardoublepage
+
+\listofalgorithms
+\addcontentsline{toc}{section}{List of Algorithms}
+
+\cleardoublepage
 
 \section{Introduction}
 The Traveling Salesman Problem (TSP) stands as one of the most iconic and extensively studied problems in combinatorial optimization and computer science. Despite its deceptively simple formulation—finding the shortest 
@@ -81,7 +91,8 @@ spanning numerous domains:
 	\item Warehouse order picking
 \end{itemize}
 
-The universality of the TSP's structure—finding an optimal arrangement or sequence—makes it relevant to any field where minimizing traversal costs is essential.
+The ubiquity of the TSP in real-world applications has spurred extensive research into its solution methods, 
+leading to a rich body of literature that encompasses exact algorithms, heuristics, and metaheuristics.
 
 \subsection{Heuristics and Metaheuristics for TSP}
 Given the computational intractability of finding exact solutions for large TSP instances, researchers have developed various metaheuristics—high-level problem-independent algorithmic frameworks 
@@ -250,12 +261,12 @@ The project is organized as follows:
 The project uses CMake as its build system. The main CMakeLists.txt file configures the build environment and links necessary dependencies, 
 particularly the CPLEX libraries required for the mathematical optimization components.
 
-\section{Data Structures}
+\subsection{Data Structures}
 The implementation uses several key data structures to efficiently manage and process TSP-related data:
 
-\subsection{TSP Instance Structure}
+\subsubsection{TSP Instance Structure}
 The core data structure is the \texttt{instance} struct, which holds all problem-related data:
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, caption={TSP Instance Structure}]
 typedef struct {
 	int nnodes;          // number of nodes
 	double* xcoord;      // x coordinates of nodes
@@ -266,27 +277,28 @@ typedef struct {
 } instance;
 \end{lstlisting}
 
-\subsection{Solution Representation}
-Solutions are represented in two main ways:
-\begin{itemize}
-	\item \textbf{Tour Array}: A simple integer array where \texttt{solution[i]} represents the node visited at position i
-	\item \textbf{Edge Matrix}: A binary matrix where \texttt{x[i][j] = 1} indicates edge (i,j) is in the tour
-\end{itemize}
+\subsubsection{Solution Representation}
+the TSP solutions are represented in two main ways:
+\begin{enumerate}
+	\item Solution structure for exact methods:
+	\begin{itemize}
+		\item Contains an integer array (solution->solution) that stores the sequence of nodes to visit in order
+		\item Each element in the array represents a city index (0-based)
+		\item Used by methods like GRASP, Extra Mileage, and Tabu Search
+	\end{itemize}
+	\item CPLEX representation for exact methods:
+	\begin{itemize}
+		\item Uses a binary variable array (xstar) where each element represents whether an edge is used
+		\item Edge variables are indexed using \texttt{get\_cplex\_variable\_index(i, j, inst)}
+		\item When a CPLEX solution is found, it's converted to the sequence representation using \texttt{build\_solution()}
+	\end{itemize}
+\end{enumerate}
 
-\subsection{Auxiliary Data Structures}
-Several helper structures are used throughout the implementations:
-
-\begin{itemize}
-	\item \textbf{Distance Matrix}: Pre-computed matrix of Euclidean distances between nodes
-	\item \textbf{Component Map}: Array used in subtour detection algorithms
-	\item \textbf{Tabu List}: Circular queue for storing recently visited solutions
-	\item \textbf{Candidate List}: Dynamic array for storing potential moves
-\end{itemize}
-
-These data structures are designed to balance memory efficiency with computational speed, particularly important for larger TSP instances.
+The \texttt{build\_solution()} function takes the binary edge variables from CPLEX and constructs a tour sequence by finding connected components. 
+The final result is always a permutation of nodes (0 to n-1) representing the order to visit cities in the TSP tour.
 
 
-\newpage
+\cleardoublepage
 
 \section{Heuristics for TSP}
 Metaheuristics represent a sophisticated class of computational methods that have evolved to address complex optimization problems where exact methods become impractical due to computational constraints. 
@@ -529,11 +541,11 @@ The extra mileage algorithm is implemented as follows:
 
 \newpage
 
-\subsection{Refining Heuristics}
+\section{Refining Heuristics}
 Refining heuristics are a type of heuristic algorithm that iteratively improve an initial solution by applying a series of local search moves. These can be applied on top of the existing heuristics we have 
 introduced so far in order to improve their performance. In the next section we will go over a one particular refining heuristic called the \textit{2-opt move}\cite{Heuristics_for_the_Traveling_Salesman_Problem}.
 
-\subsubsection{2-opt Move}
+\subsection{2-opt Move}
 Assume we have a graph $G = (V, E)$ and a directed tour $T \subseteq E$, valid as a tsp solution, 
 the 2-opt move takes two edges in that tour and swaps the nodes 
 between them.  In particular, let $(i, j), (h, k) \in T$, the 2-opt move replaces the edges $(i, j)$ and $(h, k)$ with the edges $(i, h)$ and $(j, k)$. \\
@@ -551,8 +563,12 @@ therefore in our refining heuristic we aim at:
 		\end{equation}
 		\item Or select the pair of edges in $G$ which swap results in the maximum cost reduction:
 		\begin{equation}
-			\textit{argmax}_{((i, j), (h, k)) \in E \times E} (\Delta c_G = (c_G(i, h) + c_G(j, k)) - (c_G(i, j) + c_G(h, k)))
+			\arg\max_{((i, j), (h, k)) \in E \times E} \Delta c_G ((i, j), (h, k))
 			\label{eq:2-opt-move-argmax}
+		\end{equation}
+		with 
+		\begin{equation}
+			\Delta c_G((i, j), (h, k)) = (c_G(i, h) + c_G(j, k)) - (c_G(i, j) + c_G(h, k))
 		\end{equation}
 	\end{itemize}
 	
@@ -927,7 +943,7 @@ Decision variables are the unknowns in your optimization problem that CPLEX need
 
 To define decision variables in the CPLEX environment we use the \texttt{CPXnewcols} function, which creates a set of new columns (variables) in the model.
 Each variable represents an edge in the graph and is binary (0 or 1) to indicate whether the edge is included in the tour.
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, caption={CPLEX API - CPXnewcols}]
 	int num_edges = inst->nnodes * inst->nnodes;
 	double* lb = (double*)malloc(num_edges * sizeof(double));
 	double* ub = (double*)malloc(num_edges * sizeof(double));
@@ -941,6 +957,7 @@ Each variable represents an edge in the graph and is binary (0 or 1) to indicate
 		sprintf(colnames[i], "x_%d_%d", i / inst->nnodes, i % inst->nnodes);
 	}
 	status = CPXnewcols(env, lp, num_edges, NULL, lb, ub, xctype, colnames);
+	
 \end{lstlisting}
 
 \paragraph{Constraints}
@@ -1012,21 +1029,6 @@ Here is the implementation of the iterative approach to the Bender's subtour eli
 		      \item The remaining nodes array is initialized with all node indices.
 	      \end{itemize}
 
-		\begin{lstlisting}[language=C]
-			clock_t start_time = clock();
-			int current_node_index = starting_node;
-			int remaining_nodes_count = inst->nnodes;
-			solution nearest_node;
-			int* remaining_nodes = (int*)malloc(inst->nnodes * sizeof(int));
-			inst->solution = (int*)malloc(inst->nnodes * sizeof(int));
-			inst->best_cost_value = 0;
-			for (int i = 0; i < inst->nnodes; i++) {
-				inst->solution[i] = -1;
-				remaining_nodes[i] = i;
-			}
-			remaining_nodes[current_node_index] = remaining_nodes[--remaining_nodes_count];
-		\end{lstlisting}
-
 	\item \textbf{Main Loop}:
 	      \begin{itemize}
 		      \item The function iterates over all nodes to construct the solution.
@@ -1035,15 +1037,6 @@ Here is the implementation of the iterative approach to the Bender's subtour eli
 		      \item Otherwise, it updates the solution with the nearest node and logs the current node index and nearest node found.
 		      \item The current node index is updated to the nearest node for the next iteration.
 	      \end{itemize}
-		  \begin{lstlisting}[language=C]
-			do
-			{
-				xstar = TSPopt(instance, env, lp);
-				init_data_struct(instance, &component_map, &succ, &ncomp);
-				build_solution(xstar, instance, solution, component_map, ncomp);
-				error = add_bender_constraint(env, lp, NULL, component_map, instance, *ncomp);
-			}while (*ncomp > 1);
-		  \end{lstlisting}
 
 	\item \textbf{Finalization}:
 	      \begin{itemize}
@@ -1051,13 +1044,42 @@ Here is the implementation of the iterative approach to the Bender's subtour eli
 		      \item It logs the total time taken and the cost of the solution.
 		      \item Finally, it frees the allocated memory for the remaining nodes array.
 	      \end{itemize}
-		\begin{lstlisting}[language=C]
-			clock_t end_time = clock();
-			double elapsed_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-			inst->elapsed_time = elapsed_time;
-			inst->best_cost_value = compute_solution_cost(inst, inst->solution);
-		\end{lstlisting}
 \end{enumerate}
+
+\begin{algorithm}[!ht]
+	\caption{CPLEX Branch and Cut for TSP}
+	\begin{algorithmic}[1]
+	\Procedure{CplexTSPBranchAndCut}{instance, solution}
+	\State Initialize CPLEX environment and problem
+	\State Build initial TSP model with degree constraints
+	\State $bestCost \gets \infty$
+	\State $iterationCount \gets 0$
+	\State $stop \gets false$
+	
+	\While{!$stop$}
+		\State Solve current model using CPLEX
+		\State $xstar \gets$ solution values from CPLEX
+		\State Build TSP solution from $xstar$
+		\State Calculate current solution cost
+		
+		\If{solution is connected (single component)}
+			\State $stop \gets true$
+		\Else
+			\State Find connected components in current solution
+			\State Add subtour elimination constraints
+			\State Add local branching constraint around current solution
+			\State $iterationCount \gets iterationCount + 1$
+		\EndIf
+		
+		\If{time limit or iteration limit reached}
+			\State $stop \gets true$
+		\EndIf
+	\EndWhile
+	
+	\State \Return solution
+	\EndProcedure
+	\end{algorithmic}
+	\end{algorithm}
 
 \paragraph{CPLEX Callback Approach}
 Here is the implementation of the CPLEX callback approach to the Bender's subtour elimination method:
@@ -1068,25 +1090,7 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 		\item Create and build the TSP CPLEX model.
 		\item Register the lazy constraint callback function with CPLEX using the \texttt{CPXcallbacksetfunc} function provided by the CPLEX API.
 	\end{itemize}
-	\begin{lstlisting}[language=C]
-		int error = 0;
-		CPXENVptr env = CPXopenCPLEX(&error);
-		if (error) print_error("CPXopenCPLEX() error");
-		CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
-		if (error) print_error("CPXcreateprob() error");
-		double lower_bound = -CPX_INFBOUND;
-		double upper_bound = CPX_INFBOUND;
 
-		CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
-		if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
-		CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 1);
-		CPXsetdblparam(env, CPX_PARAM_TILIM, 36000);
-		CPXsetintparam(env, CPX_PARAM_CUTUP, upper_bound);
-
-		build_model(instance, env, lp);
-		if (contextid == NULL) contextid = CPX_CALLBACKCONTEXT_CANDIDATE;
-		if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, instance)) print_error("CPXcallbacksetfunc() error");
-	\end{lstlisting}
 	\item \textbf{Lazy Constraint Callback Function}:
 	\begin{itemize}
 		\item The lazy constraint callback function is called by CPLEX whenever a new integer feasible solution is found. (Note: this solution may not be a valid TSP tour);
@@ -1095,9 +1099,6 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 		\item It uses the \texttt{CPXcutcallbackadd} function to add the subtour elimination constraints to the model.
 		\item The callback function returns control to CPLEX after adding the constraints.
 	\end{itemize}
-	\begin{lstlisting}[language=C]
-		
-	\end{lstlisting}
 	\item \textbf{Main Loop}:
 	\begin{itemize}
 		\item Solve the model using CPLEX and the lazy constraint callback function.
@@ -1113,7 +1114,38 @@ Here is the implementation of the CPLEX callback approach to the Bender's subtou
 	\end{itemize}
 \end{enumerate}
 
-\subsection{Patching Heuristic}
+\begin{algorithm}[!ht]
+	\caption{CPLEX TSP Callback Implementation}
+	\begin{algorithmic}[1]
+	\Procedure{CplexTSPCallback}{instance, solution, verbose, contextid}
+	\State Initialize CPLEX environment and problem
+	\State Set CPLEX parameters (randomness, time limits, output options)
+	\State Build initial TSP model with degree constraints
+	\State $bestCost \gets \infty$
+	
+	\State Initialize callback data structure:
+	\State \hspace{\algorithmicindent} Set instance parameters
+	\State \hspace{\algorithmicindent} Set hard fixing probability
+	\State \hspace{\algorithmicindent} Set local branching radius
+	
+	\State Register callback function with CPLEX
+	\State \Comment{Callback will handle:}
+	\State \Comment{- Subtour elimination constraints}
+	\State \Comment{- Hard fixing heuristic}
+	\State \Comment{- Local branching}
+	
+	\State Solve problem with TSPopt
+	\State Extract solution from CPLEX
+	\State Verify solution validity
+	\State Calculate solution cost
+	\State Log solution information
+	
+	\State Clean up memory and CPLEX environment
+	\State \Return status
+	\EndProcedure
+	\end{algorithmic}
+	\end{algorithm}
+
 
 \newpage
 
@@ -1251,42 +1283,12 @@ If the solution is feasible, we update the best solution found and repeat the pr
 
 \paragraph{Implementation}
 Starting from a given solution $\bar{x}$, and given the starting tsp instance, the Cplex programming environment and pointer, as shown in the function declaration below:
-\begin{lstlisting}
-	int add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp,CPXCALLBACKCONTEXTptr cpxcallbackcontex_tptr, const double* xstar, double k)
-\end{lstlisting} 
 we proceed with the floowing steps:
 \begin{enumerate}
 	\item \textbf{Constraint Modeling}: Starting from the given solution vector $xstar$, we build the constraint the will be later added to the CPLEX model.
-	\begin{lstlisting}
-		int ncols = CPXgetnumcols(env, lp);
-		int* index = (int*)calloc(ncols, sizeof(int));
-		double* coefficients = (double*)calloc(ncols, sizeof(double));
-		double right_hand_side_value = k;
-		char constraint_sense = 'G';
-		char* rname = (char*)calloc(100, sizeof(char));
-		sprintf(rname, "local_branching_constraint");
-
-		int non_zero_variables_count = 0;
-		for (int i = 0; i < ncols; i++)
-		{
-			if (xstar[i] > 0.8)
-			{
-				index[non_zero_variables_count] = i;
-				coefficients[non_zero_variables_count] = 1.0;
-				non_zero_variables_count++;
-			}
-		}
-
-		right_hand_side_value = inst->nnodes - k;
-	\end{lstlisting}
-	\item \textbf{Constraint Addition}: We then add the constraint to the model: this can be done directly by adding a row directing into the model:
-	\begin{lstlisting}
-		CPXaddrows(env, lp, 0, 1, non_zero_variables_count, &right_hand_side_value, &constraint_sense,&izero,index,coefficients, NULL, &rname);
-	\end{lstlisting}
+	\item \textbf{Constraint Addition}: We then add the constraint to the model: this can be done directly by adding a row directing into the model, 
 	or in the case we are using the CPLEX callback function, we can use the \texttt{CPXcallbackaddusercuts} function to add the constraint to the model
-	\begin{lstlisting}
-		CPXcallbackrejectcandidate(cpxcallbackcontex_tptr, 1, non_zero_variables_count,&right_hand_side_value,&constraint_sense, &izero, index, coefficients);
-	\end{lstlisting}
+
 	\item \textbf{Model Resolution}: We then solve the model and check if the solution is feasible. If the solution is feasible, we update the best solution found, 
 	remove the latest local Branching constrint (if necessary), and repeat the process until a stopping criterion is met.
 \end{enumerate}
@@ -1301,6 +1303,27 @@ In our case, we can express the constraint as follows:
 	\Rightarrow & -\sum_{j \in \hat{\mathcal{S}}} x_j \leq k' - \sum_{j \in \mathcal{S}}1 \\
 	\Rightarrow & \sum_{j \in \mathcal{S}} x_j \geq |\mathcal{S}| - k'
 \end{align}
+
+\begin{algorithm}[!ht]
+	\caption{Local Branching Heuristic}
+	\begin{algorithmic}[1]
+	\Procedure{LocalBranching}{instance, incumbent\_solution, radius}
+	\State Get the current incumbent solution $x^*$
+	\State Create a local branching constraint: $\sum_{j: x^*_j = 1} (1 - x_j) + \sum_{j: x^*_j = 0} x_j \leq radius$
+	
+	\State Add the local branching constraint to the model
+	\State Solve the restricted subproblem with time limit
+	
+	\If{better solution found}
+		\State Update incumbent solution
+	\EndIf
+	
+	\State Remove the local branching constraint
+	
+	\State \Return new solution
+	\EndProcedure
+	\end{algorithmic}
+	\end{algorithm}
 \newpage
 
 \bibliographystyle{alpha}
