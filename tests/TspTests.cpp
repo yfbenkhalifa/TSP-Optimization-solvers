@@ -125,7 +125,6 @@ TEST(TspTests, TabuSearchTest) {
     Solution *solution = (Solution*)malloc(sizeof(Solution));
     solution->solution = (int*)malloc(inst.nnodes * sizeof(int));
     tsp_grasp(&inst, solution, 0);
-    double greedy_final_cost = compute_solution_cost(&inst, solution->solution);
     tabu_search(&inst, solution->solution, solution, inst.nnodes);
     EXPECT_EQ(is_tsp_solution(&inst, solution->solution), true);
     double final_cost = compute_solution_cost(&inst, solution->solution);

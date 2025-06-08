@@ -124,13 +124,14 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
     bool stop_condition = false;
     int iteration_count = 0;
     int iterations_without_improvement = 0;
-    int max_iterations_without_improvement = -1;
+    int max_iterations_without_improvement = 100;
     double start_time = clock();
     double best_incumbent_cost = CPX_INFBOUND;
     int constraint_idx = -1;
+    int max_iterations = 10000;
     do
     {
-        int max_iterations = 10000;
+
         if (iteration_count > max_iterations && max_iterations >= 0) stop_condition = true;
 
         double elapsed_time = (clock() - start_time) / CLOCKS_PER_SEC;
@@ -182,7 +183,8 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
 
     free(component_map);
     free(xstar);
-
+    CPXfreeprob(env, &lp);
+    CPXcloseCPLEX(&env);
 
     return error;
 }

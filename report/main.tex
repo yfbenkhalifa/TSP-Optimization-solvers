@@ -200,21 +200,29 @@ including:
 
 These extensions reflect the versatility and practical significance of the TSP framework across a wide range of optimization scenarios.
 
-
 \subsection{Mathematical Formulation}
 First let us define the components that characterize the TSP problem: we begin from a graph $G = (V, E)$ where $V$ is the set of vertices (cities) and $E$ is the set of edges connecting the vertices, and a cost matrix $C$ containing the weights/costs of each edge $(i, j) \in E$. 
 Spoiler: in the implementation instead of adopting a big cost matrix, we will be simply using the euclidean distance between the nodes for computing the cost $c_{i, j}$ of a given edge $(i, j)$ , therefore the cost of a tour will simply be computed as the sum of the euclidean distances between the nodes. This will not affect the final formulation.   
 
-We then can formalize Traveling Salesman Problem  as an optimization problem as follows:
+We then can formalize the Traveling Salesman Problem as an optimization problem. The objective is to find a Hamiltonian cycle (a closed path visiting each vertex exactly once) of minimum total cost. Below we present two common mathematical formulations:
+
+\subsubsection{Miller-Tucker-Zemlin (MTZ) Formulation}
+This formulation uses additional variables to prevent subtours:
 \begin{equation}
 	\min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
 \end{equation}
 subject to:
 \begin{equation}
+	\sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
 	\sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
 \end{equation}
 \begin{equation}
-	u_i - u_j + nx_{ij} \leq n-1 \quad \forall i \in \{2, \ldots, n\}, j \in \{2, \ldots, n\}
+	u_i - u_j + nx_{ij} \leq n-1 \quad \forall i,j \in \{2, \ldots, n\}, i \neq j
+\end{equation}
+\begin{equation}
+	1 \leq u_i \leq n-1 \quad \forall i \in \{2, \ldots, n\}
 \end{equation}
 \begin{equation}
 	x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
@@ -223,8 +231,33 @@ where:
 \begin{itemize}
 	\item $c_{ij}$ is the cost of traveling from node $i$ to node $j$.
 	\item $x_{ij}$ is a binary variable that indicates whether the salesman travels from node $i$ to node $j$.
-	\item $u_i$ is a continuous variable that represents the position of node $i$ in the tour.
+	\item $u_i$ is a continuous variable that represents the position of node $i$ in the tour (node 1 is considered the starting point).
 \end{itemize}
+
+\subsubsection{Dantzig-Fulkerson-Johnson (DFJ) Formulation}
+This alternative formulation uses subtour elimination constraints:
+\begin{equation}
+	\min \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij}
+\end{equation}
+subject to:
+\begin{equation}
+	\sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
+	\sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \in \{1, \ldots, n\}
+\end{equation}
+\begin{equation}
+	\sum_{i \in S} \sum_{j \in S} x_{ij} \leq |S| - 1 \quad \forall S \subset \{1, \ldots, n\}, 2 \leq |S| \leq n-1
+\end{equation}
+\begin{equation}
+	x_{ij} \in \{0, 1\} \quad \forall i, j \in \{1, \ldots, n\}
+\end{equation}
+
+In this formulation, the third constraint eliminates subtours by ensuring that for any subset $S$ of vertices, the number of edges in the solution connecting vertices within $S$ must be at most $|S|-1$. This prevents the formation of isolated cycles within the subset.
+
+The main challenge with the DFJ formulation is that it contains an exponential number of constraints ($2^n - 2 - n$ subtour elimination constraints). In practice, these constraints are typically added dynamically through a branch-and-cut approach, which we will explore later in the CPLEX implementation section.
+
+For symmetric TSP problems (where $c_{ij} = c_{ji}$), we can simplify the formulation by defining variables only for $i < j$ and adjusting the constraints accordingly.
 
 
 \newpage
@@ -1325,6 +1358,102 @@ In our case, we can express the constraint as follows:
 	\end{algorithmic}
 	\end{algorithm}
 \newpage
+
+\section{Benchmarks}
+In this section we will go over the benchmarks we have run to test the performance of the implemented algorithms. 
+We will be comparing the two main heuristic algorithms we have implemented, namely the GRASP and Extra-Mileage, combined with the 2-Opt refining heuristic, 
+then we will compare those two same methods to the Variable Neighborhood Search and Tabu Search metaheuristics.
+
+Following that we will also take a look at how the various heuristics perform using fixed and random starting points, and also see how 
+the tabu search performs with different tabu list sizes.
+
+\subsection{Test Bed Generation}
+The test bed for the benchmarks consists of a set of TSP instances randomly genreated. Each instance of the test bed is generated with a random number of nodes, 
+within a given minim and maximum range. 
+
+\subsection{Heuristic Algorithms Comparison}
+Here we have the comparison between the GRASP and Extra Mileage heuristics, both combined with the 2-Opt refining heuristic.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/grasp_vs_extra_mileage.pdf}
+	\caption{Performance comparison between GRASP and Extra Mileage heuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
+	\label{fig:grasp_vs_extra_mileage}
+\end{figure}
+The graph in \ref{fig:grasp_vs_extra_mileage} shows the performance of the two heuristics on various TSP instances, 
+where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution. 
+The results indicate that both heuristics perform similarly across different problem sizes, with the Extra Mileage heuristic showing slightly better performance on larger instances.
+\subsection{Metaheuristics Comparison}
+In this section we will compare the performance of the Variable Neighborhood Search and Tabu Search metaheuristics, both combined with the 2-Opt refining heuristic.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/vns_vs_tabu.pdf}
+	\caption{Performance comparison between Variable Neighborhood Search and Tabu Search metaheuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
+	\label{fig:vns_vs_tabu}
+\end{figure}
+The graph in \ref{fig:vns_vs_tabu} shows the performance of the two metaheuristics on various TSP instances, 
+where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
+The results indicate that the Variable Neighborhood Search metaheuristic outperforms the Tabu Search metaheuristic on larger instances,
+with a lower percentage deviation from the optimal solution.
+\subsection{Heuristic Algorithms with Different Starting Points}
+In this section we will compare the performance of the GRASP and Extra Mileage heuristics with different starting points,
+both fixed and random. The starting point is the initial solution used by the heuristic to start the search process.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/grasp_vs_extra_mileage_starting_points.pdf}
+	\caption{Performance comparison of GRASP and Extra Mileage heuristics with different starting points (fixed vs random). The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
+	\label{fig:grasp_vs_extra_mileage_starting_points}
+\end{figure}
+
+The graph in \ref{fig:grasp_vs_extra_mileage_starting_points} shows the performance of the two heuristics with different starting points on various TSP instances, 
+where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
+The results indicate that both heuristics perform similarly with fixed and random starting points, with the Extra Mileage heuristic showing slightly better performance on larger instances.
+\subsection{Tabu Search with Different Tabu List Sizes}
+In this section we will compare the performance of the Tabu Search metaheuristic with different tabu list sizes.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/tabu_search_tabu_list_sizes.pdf}
+	\caption{Performance comparison of Tabu Search metaheuristic with different tabu list sizes. The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
+	\label{fig:tabu_search_tabu_list_sizes}
+\end{figure}
+The graph in \ref{fig:tabu_search_tabu_list_sizes} shows the performance of the Tabu Search metaheuristic with different tabu list sizes on various TSP instances, 
+where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
+The results indicate that the tabu search performs better with larger tabu list sizes, with a lower percentage deviation from the optimal solution on larger instances.
+\newpage
+\section{Conclusion}
+This thesis has explored and implemented a variety of approaches for solving the Traveling Salesman Problem, ranging from classical heuristics to sophisticated metaheuristics and modern mathheuristics. Through our extensive computational experiments and analysis, several key insights emerge:
+
+\subparagraph{Key Findings}
+Heuristic Performance: Our implementation and benchmarking of GRASP and Extra Mileage heuristics demonstrated that both approaches provide good-quality solutions, with Extra Mileage showing slightly better performance on larger instances. The 2-opt refinement procedure proved to be an essential component for improving solution quality across all methods.
+
+Metaheuristic Superiority: The Variable Neighborhood Search consistently outperformed other approaches, particularly on larger problem instances. This confirms the value of systematically exploring multiple neighborhood structures to escape local optima.
+
+Parameter Sensitivity: The tabu search algorithm showed significant sensitivity to its tabu list size parameter, with larger list sizes generally yielding better results on complex instances. This highlights the importance of proper parameter tuning in metaheuristic implementation.
+
+Mathheuristic Efficiency: The integration of mathematical programming with heuristic approaches through hard fixing and local branching demonstrated how we can effectively balance exploration and exploitation in the solution space. These approaches provided an efficient way to tackle larger instances that would be intractable for pure exact methods.
+
+Starting Solution Impact: Our experiments with different starting points revealed that while initialization can affect performance, robust metaheuristics can largely overcome poor starting solutions through their search mechanisms.
+
+\subparagraph{Limitations and Future Work}
+Despite the comprehensive nature of our implementations, several limitations and opportunities for future research remain:
+
+Parallel Implementation: Most of our algorithms were implemented sequentially. Future work could explore parallel implementations to further improve computational efficiency.
+
+Hybrid Approaches: While we implemented several classes of algorithms separately, developing hybrid approaches that combine strengths of different methods could yield even better results.
+
+Real-world Applications: Testing these algorithms on real-world data with additional constraints would provide valuable insights into their practical applicability.
+
+Additional Mathheuristics: Exploring other mathheuristic approaches like Relaxation Induced Neighborhood Search (RINS) or solution polishing could further enhance solution quality.
+
+Machine Learning Integration: Incorporating machine learning techniques to guide the search process or predict promising regions of the solution space represents a promising direction for future research.
+
+\subparagraph{Final Remarks}
+The TSP remains a fundamental problem in combinatorial optimization with wide-ranging applications. This work has demonstrated the practical effectiveness of 
+implementing various solution approaches in the C programming language with CPLEX integration. Our implementations show that while exact methods struggle with large instances, 
+well-designed heuristics, metaheuristics, and mathheuristics can provide high-quality solutions in reasonable computational time.
+
+The complementary nature of the different approaches highlights the value of having a diverse algorithmic toolkit when tackling complex optimization problems. 
+By understanding the strengths and limitations of each method, practitioners can select the most appropriate approach based on their specific problem characteristics and computational resources.
+
 
 \bibliographystyle{alpha}
 \bibliography{sample}
