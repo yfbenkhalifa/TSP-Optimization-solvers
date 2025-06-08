@@ -1,59 +1,70 @@
 \babel@toc {english}{}\relax 
-\contentsline {section}{List of Algorithms}{2}{section*.2}%
-\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
-\contentsline {subsection}{\numberline {1.1}The TSP Problem and Its Significance}{3}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Heuristics and Metaheuristics for TSP}{3}{subsection.1.2}%
-\contentsline {subsection}{\numberline {1.3}Mathheuristics for TSP}{4}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}Scope of This Thesis}{4}{subsection.1.4}%
-\contentsline {section}{\numberline {2}The Traveling Salesman Problem}{6}{section.2}%
-\contentsline {subsection}{\numberline {2.1}History of the TSP}{6}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Mathematical Formulation}{6}{subsection.2.2}%
-\contentsline {section}{\numberline {3}Development and environment setup}{8}{section.3}%
-\contentsline {paragraph}{System Environment}{8}{section*.3}%
-\contentsline {paragraph}{Dependencies}{8}{section*.4}%
-\contentsline {paragraph}{Project Structure}{8}{section*.5}%
-\contentsline {paragraph}{Build Configuration}{8}{section*.6}%
-\contentsline {subsection}{\numberline {3.1}Data Structures}{8}{subsection.3.1}%
-\contentsline {subsubsection}{\numberline {3.1.1}TSP Instance Structure}{8}{subsubsection.3.1.1}%
-\contentsline {subsubsection}{\numberline {3.1.2}Solution Representation}{9}{subsubsection.3.1.2}%
-\contentsline {section}{\numberline {4}Heuristics for TSP}{10}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Greedy Randomized Adaptive Search (GRASP)}{10}{subsection.4.1}%
-\contentsline {paragraph}{Construction Phase}{10}{section*.7}%
-\contentsline {paragraph}{Local Search Phase}{10}{section*.8}%
-\contentsline {paragraph}{Algorithm}{10}{section*.9}%
-\contentsline {paragraph}{Implementation}{11}{section*.10}%
-\contentsline {subsection}{\numberline {4.2}Extra Mileage}{13}{subsection.4.2}%
-\contentsline {paragraph}{Algorithm}{13}{section*.11}%
-\contentsline {paragraph}{Implementation}{13}{section*.12}%
-\contentsline {section}{\numberline {5}Refining Heuristics}{15}{section.5}%
-\contentsline {subsection}{\numberline {5.1}2-opt Move}{15}{subsection.5.1}%
-\contentsline {paragraph}{Algorithm}{15}{section*.13}%
-\contentsline {paragraph}{Implementation}{15}{section*.14}%
-\contentsline {section}{\numberline {6}Metaheuristics for the TSP}{17}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Tabu Search}{17}{subsection.6.1}%
-\contentsline {paragraph}{Algorithm}{17}{section*.15}%
-\contentsline {subsection}{\numberline {6.2}Variable Neighbourhood Search}{19}{subsection.6.2}%
-\contentsline {paragraph}{Algorithm}{19}{section*.16}%
-\contentsline {subsection}{\numberline {6.3}Simulated Annealing}{21}{subsection.6.3}%
-\contentsline {paragraph}{Algorithm}{21}{section*.17}%
-\contentsline {section}{\numberline {7}TSP with CPLEX}{22}{section.7}%
-\contentsline {subsection}{\numberline {7.1}History of CPLEX}{22}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Modeling the TSP with CPLEX}{22}{subsection.7.2}%
-\contentsline {paragraph}{CPLEX Environment}{23}{section*.18}%
-\contentsline {paragraph}{Decision Variables}{23}{section*.19}%
-\contentsline {paragraph}{Constraints}{23}{section*.20}%
-\contentsline {subsection}{\numberline {7.3}Bender's subtour elimination method}{24}{subsection.7.3}%
-\contentsline {paragraph}{Subtour Elimination Constraints}{24}{section*.21}%
-\contentsline {paragraph}{Implementation}{24}{section*.22}%
-\contentsline {paragraph}{Iterative Approach}{25}{section*.23}%
-\contentsline {paragraph}{CPLEX Callback Approach}{25}{section*.24}%
-\contentsline {section}{\numberline {8}Mathheuristics}{27}{section.8}%
-\contentsline {subparagraph}{General-Purpose MIP-Based Heuristics}{27}{section*.25}%
-\contentsline {subsection}{\numberline {8.1}Hard Fixing Mathheuristic}{29}{subsection.8.1}%
-\contentsline {subparagraph}{Algorithm}{29}{section*.26}%
-\contentsline {subparagraph}{Implementation}{29}{section*.27}%
-\contentsline {subsection}{\numberline {8.2}Local Branching}{30}{subsection.8.2}%
-\contentsline {paragraph}{Algorithm}{30}{section*.28}%
-\contentsline {paragraph}{Implementation}{30}{section*.29}%
-\contentsline {subparagraph}{Note}{31}{section*.30}%
-\contentsline {section}{\numberline {9}Benchmarks}{32}{section.9}%
+\contentsline {section}{List of Algorithms}{3}{section*.2}%
+\contentsline {section}{\numberline {1}Introduction}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}The TSP Problem and Its Significance}{4}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Heuristics and Metaheuristics for TSP}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Mathheuristics for TSP}{5}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Scope of This Thesis}{5}{subsection.1.4}%
+\contentsline {section}{\numberline {2}The Traveling Salesman Problem}{7}{section.2}%
+\contentsline {subsection}{\numberline {2.1}History of the TSP}{7}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Mathematical Formulation}{7}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Miller-Tucker-Zemlin (MTZ) Formulation}{8}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Dantzig-Fulkerson-Johnson (DFJ) Formulation}{8}{subsubsection.2.2.2}%
+\contentsline {section}{\numberline {3}Development and environment setup}{9}{section.3}%
+\contentsline {paragraph}{System Environment}{9}{section*.3}%
+\contentsline {paragraph}{Dependencies}{9}{section*.4}%
+\contentsline {paragraph}{Project Structure}{9}{section*.5}%
+\contentsline {paragraph}{Build Configuration}{9}{section*.6}%
+\contentsline {subsection}{\numberline {3.1}Data Structures}{9}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}TSP Instance Structure}{9}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Solution Representation}{10}{subsubsection.3.1.2}%
+\contentsline {section}{\numberline {4}Heuristics for TSP}{11}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Greedy Randomized Adaptive Search (GRASP)}{11}{subsection.4.1}%
+\contentsline {paragraph}{Construction Phase}{11}{section*.7}%
+\contentsline {paragraph}{Local Search Phase}{11}{section*.8}%
+\contentsline {paragraph}{Algorithm}{11}{section*.9}%
+\contentsline {paragraph}{Implementation}{12}{section*.10}%
+\contentsline {subsection}{\numberline {4.2}Extra Mileage}{14}{subsection.4.2}%
+\contentsline {paragraph}{Algorithm}{14}{section*.11}%
+\contentsline {paragraph}{Implementation}{14}{section*.12}%
+\contentsline {section}{\numberline {5}Refining Heuristics}{16}{section.5}%
+\contentsline {subsection}{\numberline {5.1}2-opt Move}{16}{subsection.5.1}%
+\contentsline {paragraph}{Algorithm}{16}{section*.13}%
+\contentsline {paragraph}{Implementation}{16}{section*.14}%
+\contentsline {section}{\numberline {6}Metaheuristics for the TSP}{18}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Tabu Search}{18}{subsection.6.1}%
+\contentsline {paragraph}{Algorithm}{18}{section*.15}%
+\contentsline {subsection}{\numberline {6.2}Variable Neighbourhood Search}{20}{subsection.6.2}%
+\contentsline {paragraph}{Algorithm}{20}{section*.16}%
+\contentsline {subsection}{\numberline {6.3}Simulated Annealing}{22}{subsection.6.3}%
+\contentsline {paragraph}{Algorithm}{22}{section*.17}%
+\contentsline {section}{\numberline {7}TSP with CPLEX}{23}{section.7}%
+\contentsline {subsection}{\numberline {7.1}History of CPLEX}{23}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Modeling the TSP with CPLEX}{23}{subsection.7.2}%
+\contentsline {paragraph}{CPLEX Environment}{24}{section*.18}%
+\contentsline {paragraph}{Decision Variables}{24}{section*.19}%
+\contentsline {paragraph}{Constraints}{24}{section*.20}%
+\contentsline {subsection}{\numberline {7.3}Bender's subtour elimination method}{25}{subsection.7.3}%
+\contentsline {paragraph}{Subtour Elimination Constraints}{25}{section*.21}%
+\contentsline {paragraph}{Implementation}{25}{section*.22}%
+\contentsline {paragraph}{Iterative Approach}{26}{section*.23}%
+\contentsline {paragraph}{CPLEX Callback Approach}{26}{section*.24}%
+\contentsline {section}{\numberline {8}Mathheuristics}{28}{section.8}%
+\contentsline {subparagraph}{General-Purpose MIP-Based Heuristics}{28}{section*.25}%
+\contentsline {subsection}{\numberline {8.1}Hard Fixing Mathheuristic}{30}{subsection.8.1}%
+\contentsline {subparagraph}{Algorithm}{30}{section*.26}%
+\contentsline {subparagraph}{Implementation}{30}{section*.27}%
+\contentsline {subsection}{\numberline {8.2}Local Branching}{31}{subsection.8.2}%
+\contentsline {paragraph}{Algorithm}{31}{section*.28}%
+\contentsline {paragraph}{Implementation}{31}{section*.29}%
+\contentsline {subparagraph}{Note}{32}{section*.30}%
+\contentsline {section}{\numberline {9}Benchmarks}{33}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Test Bed Generation}{33}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Heuristic Algorithms Comparison}{33}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Metaheuristics Comparison}{33}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Heuristic Algorithms with Different Starting Points}{34}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}Tabu Search with Different Tabu List Sizes}{34}{subsection.9.5}%
+\contentsline {section}{\numberline {10}Conclusion}{35}{section.10}%
+\contentsline {subparagraph}{Key Findings}{36}{section*.31}%
+\contentsline {subparagraph}{Limitations and Future Work}{36}{section*.32}%
+\contentsline {subparagraph}{Final Remarks}{36}{section*.33}%

@@ -1373,9 +1373,9 @@ within a given minim and maximum range.
 
 \subsection{Heuristic Algorithms Comparison}
 Here we have the comparison between the GRASP and Extra Mileage heuristics, both combined with the 2-Opt refining heuristic.
-\begin{figure}[ht]
+\begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/grasp_vs_extra_mileage.pdf}
+	\includegraphics[width=0.8\textwidth]{plots/grasp_vs_extra.pdf}
 	\caption{Performance comparison between GRASP and Extra Mileage heuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
 	\label{fig:grasp_vs_extra_mileage}
 \end{figure}
@@ -1384,9 +1384,9 @@ where the x-axis represents the problem size (number of nodes) and the y-axis re
 The results indicate that both heuristics perform similarly across different problem sizes, with the Extra Mileage heuristic showing slightly better performance on larger instances.
 \subsection{Metaheuristics Comparison}
 In this section we will compare the performance of the Variable Neighborhood Search and Tabu Search metaheuristics, both combined with the 2-Opt refining heuristic.
-\begin{figure}[ht]
+\begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/vns_vs_tabu.pdf}
+	\includegraphics[width=0.8\textwidth]{plots/grasp_extra_tabu_2.pdf}
 	\caption{Performance comparison between Variable Neighborhood Search and Tabu Search metaheuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
 	\label{fig:vns_vs_tabu}
 \end{figure}
@@ -1397,9 +1397,9 @@ with a lower percentage deviation from the optimal solution.
 \subsection{Heuristic Algorithms with Different Starting Points}
 In this section we will compare the performance of the GRASP and Extra Mileage heuristics with different starting points,
 both fixed and random. The starting point is the initial solution used by the heuristic to start the search process.
-\begin{figure}[ht]
+\begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/grasp_vs_extra_mileage_starting_points.pdf}
+	\includegraphics[width=0.8\textwidth]{plots/fixed_vs_random_start.pdf}
 	\caption{Performance comparison of GRASP and Extra Mileage heuristics with different starting points (fixed vs random). The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
 	\label{fig:grasp_vs_extra_mileage_starting_points}
 \end{figure}
@@ -1409,9 +1409,9 @@ where the x-axis represents the problem size (number of nodes) and the y-axis re
 The results indicate that both heuristics perform similarly with fixed and random starting points, with the Extra Mileage heuristic showing slightly better performance on larger instances.
 \subsection{Tabu Search with Different Tabu List Sizes}
 In this section we will compare the performance of the Tabu Search metaheuristic with different tabu list sizes.
-\begin{figure}[ht]
+\begin{figure}[!ht]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/tabu_search_tabu_list_sizes.pdf}
+	\includegraphics[width=0.8\textwidth]{plots/grasp_extra_tabu_2.pdf}
 	\caption{Performance comparison of Tabu Search metaheuristic with different tabu list sizes. The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
 	\label{fig:tabu_search_tabu_list_sizes}
 \end{figure}
@@ -1419,6 +1419,8 @@ The graph in \ref{fig:tabu_search_tabu_list_sizes} shows the performance of the 
 where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
 The results indicate that the tabu search performs better with larger tabu list sizes, with a lower percentage deviation from the optimal solution on larger instances.
 \newpage
+
+
 \section{Conclusion}
 This thesis has explored and implemented a variety of approaches for solving the Traveling Salesman Problem, ranging from classical heuristics to sophisticated metaheuristics and modern mathheuristics. Through our extensive computational experiments and analysis, several key insights emerge:
 
@@ -1448,7 +1450,7 @@ well-designed heuristics, metaheuristics, and mathheuristics can provide high-qu
 The complementary nature of the different approaches highlights the value of having a diverse algorithmic toolkit when tackling complex optimization problems. 
 By understanding the strengths and limitations of each method, practitioners can select the most appropriate approach based on their specific problem characteristics and computational resources.
 
-
+\newpage
 \bibliographystyle{alpha}
 \bibliography{sample}
 

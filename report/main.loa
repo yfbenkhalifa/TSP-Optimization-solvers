@@ -1,11 +1,11 @@
-\contentsline {algorithm}{\numberline {1}{\ignorespaces TSP GRASP Metaheuristic}}{11}{algorithm.1}%
-\contentsline {algorithm}{\numberline {2}{\ignorespaces TSP GRASP}}{12}{algorithm.2}%
-\contentsline {algorithm}{\numberline {3}{\ignorespaces TSP Extra Mileage}}{14}{algorithm.3}%
-\contentsline {algorithm}{\numberline {4}{\ignorespaces TSP 2-opt Local Search}}{16}{algorithm.4}%
-\contentsline {algorithm}{\numberline {5}{\ignorespaces TSP Tabu Search}}{18}{algorithm.5}%
-\contentsline {algorithm}{\numberline {6}{\ignorespaces TSP Variable Neighborhood Search}}{20}{algorithm.6}%
-\contentsline {algorithm}{\numberline {7}{\ignorespaces Simulated Annealing for TSP}}{21}{algorithm.7}%
-\contentsline {algorithm}{\numberline {8}{\ignorespaces CPLEX Branch and Cut for TSP}}{26}{algorithm.8}%
-\contentsline {algorithm}{\numberline {9}{\ignorespaces CPLEX TSP Callback Implementation}}{27}{algorithm.9}%
-\contentsline {algorithm}{\numberline {10}{\ignorespaces Hard Fixing Heuristic}}{30}{algorithm.10}%
-\contentsline {algorithm}{\numberline {11}{\ignorespaces Local Branching Heuristic}}{31}{algorithm.11}%
+\contentsline {algorithm}{\numberline {1}{\ignorespaces TSP GRASP Metaheuristic}}{12}{algorithm.1}%
+\contentsline {algorithm}{\numberline {2}{\ignorespaces TSP GRASP}}{13}{algorithm.2}%
+\contentsline {algorithm}{\numberline {3}{\ignorespaces TSP Extra Mileage}}{15}{algorithm.3}%
+\contentsline {algorithm}{\numberline {4}{\ignorespaces TSP 2-opt Local Search}}{17}{algorithm.4}%
+\contentsline {algorithm}{\numberline {5}{\ignorespaces TSP Tabu Search}}{19}{algorithm.5}%
+\contentsline {algorithm}{\numberline {6}{\ignorespaces TSP Variable Neighborhood Search}}{21}{algorithm.6}%
+\contentsline {algorithm}{\numberline {7}{\ignorespaces Simulated Annealing for TSP}}{22}{algorithm.7}%
+\contentsline {algorithm}{\numberline {8}{\ignorespaces CPLEX Branch and Cut for TSP}}{27}{algorithm.8}%
+\contentsline {algorithm}{\numberline {9}{\ignorespaces CPLEX TSP Callback Implementation}}{28}{algorithm.9}%
+\contentsline {algorithm}{\numberline {10}{\ignorespaces Hard Fixing Heuristic}}{31}{algorithm.10}%
+\contentsline {algorithm}{\numberline {11}{\ignorespaces Local Branching Heuristic}}{32}{algorithm.11}%
