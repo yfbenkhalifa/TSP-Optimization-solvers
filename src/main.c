@@ -29,6 +29,30 @@ void export_to_gnuplot(instance *inst, int *solution) {
     fclose(fout);
 }
 
+typedef int (*TspMethodHandler)(instance*, int*, int);
+
+typedef struct {
+    const char *name;
+    TspMethodHandler handler;
+    int extra_arg; // for methods needing extra args, e.g., local_branching_k
+} MethodEntry;
+
+// Wrappers for methods with different signatures
+int branch_and_cut_wrapper(instance *inst, int *solution, int verbose) {
+    // Default local_branching_k = 17
+    return cplex_tsp_branch_and_cut(inst, solution, verbose, 17);
+}
+int callback_candidate_wrapper(instance *inst, int *solution, int verbose) {
+    return cplex_tsp_callback(inst, solution, verbose, CPX_CALLBACKCONTEXT_CANDIDATE);
+}
+int callback_hard_fixing_wrapper(instance *inst, int *solution, int verbose) {
+    return cplex_tsp_callback(inst, solution, verbose, CPX_CALLBACKCONTEXT_CANDIDATE);
+}
+int not_implemented_wrapper(instance *inst, int *solution, int verbose) {
+    log_message(LOG_LEVEL_WARNING, "Selected method is not implemented yet.");
+    return -2;
+}
+
 int main(int argc, char *argv[]) {
     const char *method = NULL;
     const char *tsp_file = NULL;
@@ -36,6 +60,7 @@ int main(int argc, char *argv[]) {
     int random_size = 0;
     const char *log_file = "logfile.log";
 
+    // Parse command line arguments
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0 && i + 1 < argc) {
             method = argv[++i];
@@ -51,7 +76,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (method == NULL || (tsp_file == NULL && random_size == 0)) {
-        fprintf(stderr, "Usage: %s -m <method> [--print] [--random <size>] [--log <logfile>] <tsp_file>\n", argv[0]);
+        log_message(LOG_LEVEL_ERROR, "Usage: %s -m <method> [--print] [--random <size>] [--log <logfile>] <tsp_file>", argv[0]);
         return 1;
     }
 
@@ -59,10 +84,15 @@ int main(int argc, char *argv[]) {
     instance inst;
     memset(&inst, 0, sizeof(instance));
 
+    // Instance initialization
     if (random_size > 0) {
         inst.nnodes = random_size;
         inst.xcoord = (double *) malloc(sizeof(double) * random_size);
         inst.ycoord = (double *) malloc(sizeof(double) * random_size);
+        if (!inst.xcoord || !inst.ycoord) {
+            log_message(LOG_LEVEL_ERROR, "Failed to allocate memory for random instance coordinates.");
+            return 1;
+        }
         srand((unsigned int) time(NULL));
         for (int i = 0; i < random_size; i++) {
             inst.xcoord[i] = ((double) rand() / RAND_MAX) * 1000.0;
@@ -72,37 +102,77 @@ int main(int argc, char *argv[]) {
     } else {
         strcpy(inst.input_file, tsp_file);
         read_input(&inst);
-    }
-    int *solution = (int *) calloc(inst.nnodes, sizeof(int));
-    clock_t start = clock();
-    if (strcmp(method, "branch_and_cut") == 0) {
-        int result = cplex_tsp_branch_and_cut(&inst, solution, VERBOSE, 17);
-        if (result != 0) {
-            fprintf(stderr, "Error in branch and cut method\n");
-            free(solution);
-            return result;
+        if (inst.nnodes <= 0 || !inst.xcoord || !inst.ycoord) {
+            log_message(LOG_LEVEL_ERROR, "Failed to read TSP instance from file: %s", tsp_file);
+            return 1;
         }
-    } else if (strcmp(method, "cplex_callback_candidate") == 0) {
-        cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
-    } else if (strcmp(method, "cplex_callback_hard_fixing") == 0) {
-        cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
-    } else if (strcmp(method, "tsp_greedy") == 0) {
-        // TODO: implement greedy
-    } else {
-        fprintf(stderr, "Unknown method: %s\n", method);
+    }
+
+    int *solution = (int *) calloc(inst.nnodes, sizeof(int));
+    if (!solution) {
+        log_message(LOG_LEVEL_ERROR, "Failed to allocate memory for solution array.");
+        if (random_size > 0) {
+            free(inst.xcoord);
+            free(inst.ycoord);
+        }
+        return 1;
+    }
+    clock_t start = clock();
+    int method_found = 0;
+    int method_result = 0;
+    MethodEntry methods[] = {
+        {"branch_and_cut", branch_and_cut_wrapper, 0},
+        {"cplex_callback_candidate", callback_candidate_wrapper, 0},
+        {"cplex_callback_hard_fixing", callback_hard_fixing_wrapper, 0},
+        {"tsp_greedy", not_implemented_wrapper, 0},
+    };
+
+    const int num_methods = sizeof(methods) / sizeof(MethodEntry);
+    for (int i = 0; i < num_methods; ++i) {
+        if (strcmp(method, methods[i].name) == 0) {
+            method_found = 1;
+            method_result = methods[i].handler(&inst, solution, VERBOSE);
+            if (method_result != 0) {
+                log_message(LOG_LEVEL_ERROR, "Error in method '%s' (code %d)", methods[i].name, method_result);
+            }
+            break;
+        }
+    }
+    if (!method_found) {
+        log_message(LOG_LEVEL_ERROR, "Unknown method: %s", method);
         free(solution);
+        if (random_size > 0) {
+            free(inst.xcoord);
+            free(inst.ycoord);
+        }
         return 1;
     }
     clock_t end = clock();
     double elapsed = (double) (end - start) / CLOCKS_PER_SEC;
-    double cost = 0.0;
+
+    // Check for invalid solution (e.g., all -1)
+    int valid_solution = 1;
     for (int i = 0; i < inst.nnodes; i++) {
-        int from = i;
-        int to = solution[i];
-        double dx = inst.xcoord[from] - inst.xcoord[to];
-        double dy = inst.ycoord[from] - inst.ycoord[to];
-        cost += sqrt(dx * dx + dy * dy);
+        if (solution[i] < 0 || solution[i] >= inst.nnodes) {
+            valid_solution = 0;
+            break;
+        }
     }
+
+    double cost = 0.0;
+    if (valid_solution) {
+        for (int i = 0; i < inst.nnodes; i++) {
+            int from = i;
+            int to = solution[i];
+            double dx = inst.xcoord[from] - inst.xcoord[to];
+            double dy = inst.ycoord[from] - inst.ycoord[to];
+            cost += sqrt(dx * dx + dy * dy);
+        }
+    } else {
+        log_message(LOG_LEVEL_WARNING, "No valid solution found for instance %s with method %s.", inst.input_file, method);
+        cost = -1.0;
+    }
+
     char instance_label[128];
     if (random_size > 0) {
         snprintf(instance_label, sizeof(instance_label), "random_%d", random_size);
@@ -111,14 +181,15 @@ int main(int argc, char *argv[]) {
     }
     log_results_to_csv(log_file, instance_label, method, cost, elapsed);
 
-    if (print_flag) {
+    if (print_flag && valid_solution) {
         export_to_gnuplot(&inst, solution);
         system("gnuplot ./gnuplot_commands.txt");
     }
+
     free(solution);
     if (random_size > 0) {
         free(inst.xcoord);
         free(inst.ycoord);
     }
-    return 0;
+    return (valid_solution && method_result == 0) ? 0 : 1;
 }
