@@ -88,22 +88,21 @@ double* TSPopt(instance* inst, CPXENVptr env, CPXLPptr lp)
 {
     int error;
     error = CPXmipopt(env, lp);
-    if (error)
-    {
-        printf("CPX error code %d\n", error);
-        print_error("CPXmipopt() error");
-    }
-
     int ncols = CPXgetnumcols(env, lp);
     double* xstar = (double*)calloc(ncols, sizeof(double));
-    int cpxgetx_error = CPXgetx(env, lp, xstar, 0, ncols - 1);
-
-    if (cpxgetx_error > 0) print_error("CPXgetx() error");
-
+    error = CPXgetx(env, lp, xstar, 0, ncols - 1);
+    if (error) {
+        if (error == 1217 /* CPXERR_NO_SOLN */) {
+            log_message(LOG_LEVEL_ERROR, "CPLEX error 1217: No solution exists for the current model.");
+            return NULL;
+        } else {
+            log_message(LOG_LEVEL_ERROR, "CPLEX error %d: Failed to get solution vector.", error);
+        }
+    }
     return xstar;
 }
 
-int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
+int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose, int local_branching_k)
 {
     int error = 0;
     const double time_limit = -1;
@@ -141,6 +140,11 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
         log_message(LOG_LEVEL_INFO, "CPLEX iteration %d\n", iteration_count);
 
         xstar = TSPopt(instance, env, lp);
+        if (xstar == NULL) {
+            for (int i = 0; i < instance->nnodes; i++) solution[i] = -1;
+            log_message(LOG_LEVEL_ERROR, "No solution found by CPLEX branch and cut (error 1217). Trying increasing local branching parameter");
+            return -1;
+        }
         init_data_struct(instance, &component_map, &succ, &ncomp);
         build_solution(xstar, instance, solution, component_map, ncomp);
         double current_incumbent_cost = compute_solution_cost(instance, solution);
@@ -161,7 +165,10 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
             CPXdelrows(env, lp, constraint_idx, constraint_idx);
         }
 
-        constraint_idx = add_local_branching_constraint(instance, env, lp, NULL, xstar, 20);
+        if (local_branching_k > 0) {
+            constraint_idx = add_local_branching_constraint(instance, env, lp, NULL, xstar, local_branching_k);
+        }
+
 
 
         if (max_iterations >= 0) iteration_count++;

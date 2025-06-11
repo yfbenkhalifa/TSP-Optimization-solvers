@@ -76,7 +76,12 @@ int main(int argc, char *argv[]) {
     int *solution = (int *) calloc(inst.nnodes, sizeof(int));
     clock_t start = clock();
     if (strcmp(method, "branch_and_cut") == 0) {
-        cplex_tsp_branch_and_cut(&inst, solution, VERBOSE);
+        int result = cplex_tsp_branch_and_cut(&inst, solution, VERBOSE, 17);
+        if (result != 0) {
+            fprintf(stderr, "Error in branch and cut method\n");
+            free(solution);
+            return result;
+        }
     } else if (strcmp(method, "cplex_callback_candidate") == 0) {
         cplex_tsp_callback(&inst, solution, VERBOSE, CPX_CALLBACKCONTEXT_CANDIDATE);
     } else if (strcmp(method, "cplex_callback_hard_fixing") == 0) {
@@ -98,7 +103,6 @@ int main(int argc, char *argv[]) {
         double dy = inst.ycoord[from] - inst.ycoord[to];
         cost += sqrt(dx * dx + dy * dy);
     }
-    // Log to CSV: instance is either random_size or tsp_file
     char instance_label[128];
     if (random_size > 0) {
         snprintf(instance_label, sizeof(instance_label), "random_%d", random_size);
