@@ -161,7 +161,7 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose)
             CPXdelrows(env, lp, constraint_idx, constraint_idx);
         }
 
-        constraint_idx = add_local_branching_constraint(instance, env, lp, NULL, xstar, 10);
+        constraint_idx = add_local_branching_constraint(instance, env, lp, NULL, xstar, 20);
 
 
         if (max_iterations >= 0) iteration_count++;
