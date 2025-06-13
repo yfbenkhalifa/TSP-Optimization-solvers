@@ -122,6 +122,8 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose, in
     int* ncomp;
     bool stop_condition = false;
     int iteration_count = 0;
+    int iterations_with_no_solution = 0;
+    int max_iterations_with_no_solution = 5;
     int iterations_without_improvement = 0;
     int max_iterations_without_improvement = 100;
     double start_time = clock();
@@ -142,8 +144,19 @@ int cplex_tsp_branch_and_cut(instance* instance, int* solution, int _verbose, in
         xstar = TSPopt(instance, env, lp);
         if (xstar == NULL) {
             for (int i = 0; i < instance->nnodes; i++) solution[i] = -1;
-            log_message(LOG_LEVEL_ERROR, "No solution found by CPLEX branch and cut (error 1217). Trying increasing local branching parameter");
-            return -1;
+            log_message(LOG_LEVEL_WARNING, "No solution found by CPLEX branch and cut (error 1217). Increase local branching parameter...");
+            if (iterations_with_no_solution > max_iterations_with_no_solution && max_iterations_with_no_solution >= 0)
+            {
+                log_message(LOG_LEVEL_ERROR, "Max iterations with no solution reached. Stopping...");
+                return -1;
+            }
+            CPXdelrows(env, lp, constraint_idx, constraint_idx);
+            free(xstar);
+            constraint_idx = -1;
+            local_branching_k += 5;
+
+            iterations_with_no_solution++;
+            continue;
         }
         init_data_struct(instance, &component_map, &succ, &ncomp);
         build_solution(xstar, instance, solution, component_map, ncomp);
@@ -284,7 +297,7 @@ int cplex_hard_fixing(instance* instance, CPXCALLBACKCONTEXTptr context, double 
     return error;
 }
 
-int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid)
+int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG contextid, double upper_bound)
 {
     int error = 0;
     CPXENVptr env = CPXopenCPLEX(&error);
@@ -292,16 +305,14 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
     CPXLPptr lp = CPXcreateprob(env, &error, "TSP model version 1");
     if (error) print_error("CPXcreateprob() error");
 
-    // TODO: Init starting solution with lower bound update
     double lower_bound = -CPX_INFBOUND;
-    double upper_bound = CPX_INFBOUND;
     int ncols = instance->ncols;
     double best_incumbent_cost = CPX_INFBOUND;
     int iteration_count = 0;
 
     CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
     if (_verbose >= 60) CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
-    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 1);
+    CPXsetintparam(env, CPX_PARAM_RANDOMSEED, 42);
     CPXsetdblparam(env, CPX_PARAM_TILIM, 36000);
     CPXsetintparam(env, CPX_PARAM_CUTUP, upper_bound);
 
@@ -321,7 +332,7 @@ int cplex_tsp_callback(instance* instance, int* solution, int _verbose, CPXLONG 
 
     cb_data->instance = instance;
     cb_data->hard_fixing_p_fix = 0.3;
-    cb_data->local_branching_k = 10;
+    cb_data->local_branching_k = 0;
 
     if (CPXcallbacksetfunc(env, lp, contextid, callback_driver, cb_data))
         print_error("CPXcallbacksetfunc() error");
@@ -421,3 +432,4 @@ int add_local_branching_constraint(instance* inst, CPXENVptr env, CPXLPptr lp,
 
     return row_index;
 }
+

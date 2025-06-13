@@ -1,0 +1,12 @@
+3,CPLEX Branch and Cut, CPLEX Branch and cut with Local Branching,CPLEX Callaback with Hard Fixing
+a280_1.tsp,15.012283
+ali535_1.tsp,418.219333
+att48_1.tsp,0.337382
+att532_1.tsp,1342.287481
+berlin52_1.tsp,7544.365902,0.096450
+bier127_1.tsp,118293.523816,1.541727
+burma14_1.tsp,30.878504,0.007114
+ch130_1.tsp,6110.883781,3.626800
+ch150_1.tsp,6530.902722,10.201738
+d198_1.tsp,15808.652051,19.105567
+d493_1.tsp,35019.412162,362.048920

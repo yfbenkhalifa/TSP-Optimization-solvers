@@ -1360,64 +1360,114 @@ In our case, we can express the constraint as follows:
 \newpage
 
 \section{Benchmarks}
-In this section we will go over the benchmarks we have run to test the performance of the implemented algorithms. 
-We will be comparing the two main heuristic algorithms we have implemented, namely the GRASP and Extra-Mileage, combined with the 2-Opt refining heuristic, 
-then we will compare those two same methods to the Variable Neighborhood Search and Tabu Search metaheuristics.
+In this section we will go over the benchmarks we have run to test the performance of the implemented algorithms. Here is the list of benchmarks we will be going over:
+\begin{itemize}
+	\item Heuristic Algorithms Comparison: GRASP vs Extra Mileage
+	\item Heuristic Algorithms with Different Starting Points: Fixed vs Random
+	\item Tabu Search with Different Tabu List Sizes
+	\item Heuristic Algorithms vs Metaheuristic: GRASP vs Extra Mileage vs Tabu Search 
+	\item CPLEX solver Performance benchmark
+\end{itemize}
+The benchmarks were run on a set of TSP instances randomly generated, with different number of nodes. We will also take a look at the performance of the methods on 
+the well known TSPLIB instances, which are a set of standard TSP instances used for benchmarking purposes.
 
-Following that we will also take a look at how the various heuristics perform using fixed and random starting points, and also see how 
-the tabu search performs with different tabu list sizes.
-
-\subsection{Test Bed Generation}
-The test bed for the benchmarks consists of a set of TSP instances randomly genreated. Each instance of the test bed is generated with a random number of nodes, 
-within a given minim and maximum range. 
+\subsection{Performance Profiler}
+A performance profile plot visually compares the performance of multiple algorithms across a set of problem instances.
+It represents:
+\begin{itemize}
+	\item X-axis (Performance Ratio): For each instance, the cost of each method is divided by the best (minimum) cost for that instance, giving a ratio $\geq 1$. The x-axis shows these ratios.
+	\item Y-axis (Fraction of Instances): For each method, the y-axis shows the fraction of instances where the method's performance ratio is less than or equal to a given value on the x-axis.
+\end{itemize}
+The plot shows, for each method, how often it is within a certain factor of the best solution across all tested instances, 
+allowing easy visual comparison of algorithm robustness and quality.
 
 \subsection{Heuristic Algorithms Comparison}
 Here we have the comparison between the GRASP and Extra Mileage heuristics, both combined with the 2-Opt refining heuristic.
+
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=0.8\textwidth]{plots/grasp_vs_extra.pdf}
 	\caption{Performance comparison between GRASP and Extra Mileage heuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
 	\label{fig:grasp_vs_extra_mileage}
 \end{figure}
-The graph in \ref{fig:grasp_vs_extra_mileage} shows the performance of the two heuristics on various TSP instances, 
-where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution. 
-The results indicate that both heuristics perform similarly across different problem sizes, with the Extra Mileage heuristic showing slightly better performance on larger instances.
-\subsection{Metaheuristics Comparison}
-In this section we will compare the performance of the Variable Neighborhood Search and Tabu Search metaheuristics, both combined with the 2-Opt refining heuristic.
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=0.8\textwidth]{plots/grasp_extra_tabu_2.pdf}
-	\caption{Performance comparison between Variable Neighborhood Search and Tabu Search metaheuristics on various TSP instances. The graph shows solution quality (as percentage deviation from optimal) for different problem sizes.}
-	\label{fig:vns_vs_tabu}
-\end{figure}
-The graph in \ref{fig:vns_vs_tabu} shows the performance of the two metaheuristics on various TSP instances, 
-where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
-The results indicate that the Variable Neighborhood Search metaheuristic outperforms the Tabu Search metaheuristic on larger instances,
-with a lower percentage deviation from the optimal solution.
+
+The graph in \ref{fig:grasp_vs_extra_mileage} shows the performance of the two heuristics on various randommly generate TSP instances,. 
+The results indicate that both heuristics perform similarly, with the Extra Mileage heuristic showing slightly better performance on most instances.
+
+
 \subsection{Heuristic Algorithms with Different Starting Points}
 In this section we will compare the performance of the GRASP and Extra Mileage heuristics with different starting points,
-both fixed and random. The starting point is the initial solution used by the heuristic to start the search process.
+both fixed and random. The starting point in some heuristic may be an influental factor on the quality of the final solution computed by the algorithm, 
+it is then interesting to see how the two different approaches differ in terms of performance.
+
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=0.8\textwidth]{plots/fixed_vs_random_start.pdf}
-	\caption{Performance comparison of GRASP and Extra Mileage heuristics with different starting points (fixed vs random). The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
+	\caption{Performance profiler for GRASP and Extra Mileage heuristics with different starting points (fixed vs random) on a set of random TSP instances.}
 	\label{fig:grasp_vs_extra_mileage_starting_points}
 \end{figure}
+The results indicate that both heuristics perform similarly with fixed and random starting points, 
+with the Extra Mileage heuristic showing slightly better performance on larger instances.
 
-The graph in \ref{fig:grasp_vs_extra_mileage_starting_points} shows the performance of the two heuristics with different starting points on various TSP instances, 
-where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
-The results indicate that both heuristics perform similarly with fixed and random starting points, with the Extra Mileage heuristic showing slightly better performance on larger instances.
 \subsection{Tabu Search with Different Tabu List Sizes}
-In this section we will compare the performance of the Tabu Search metaheuristic with different tabu list sizes.
+Another interesting aspect of the Tabu Search metaheuristic is the size of the tabu list, which can have a significant impact on the performance of the algorithm.
+In this section we will compare the performance of the Tabu Search metaheuristic with different tabu list sizes (10, 20 and 30).
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.8\textwidth]{plots/tabu_variable_neighbourhhod.pdf}
+	\caption{Performance profiler for Tabu Search metaheuristic with different tabu list sizes over a set of random TSP instances.}
+	\label{fig:tabu_search_tabu_list_sizes}
+\end{figure}
+
+The results indicate that the tabu search performs better with larger tabu list sizes, 
+with a lower percentage deviation from the optimal solution on larger instances.
+
+\subsection{Heuristic Algorithms vs Metaheuristic}
+Now we will take a look at a straight up comparison between the GRASP, Extra Mileage heuristics, and the Tabu Search metaheuristic: 
+
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=0.8\textwidth]{plots/grasp_extra_tabu_2.pdf}
-	\caption{Performance comparison of Tabu Search metaheuristic with different tabu list sizes. The graph shows solution quality (as percentage deviation from optimal) for various TSP instances.}
-	\label{fig:tabu_search_tabu_list_sizes}
+	\caption{Performance profile comparing GRASP, Extra Mileage heuristics, and Tabu Search metaheuristic on random TSP instances.}
+	\label{fig:grasp_vs_extra_mileage_vs_tabu}
 \end{figure}
-The graph in \ref{fig:tabu_search_tabu_list_sizes} shows the performance of the Tabu Search metaheuristic with different tabu list sizes on various TSP instances, 
-where the x-axis represents the problem size (number of nodes) and the y-axis represents the solution quality as a percentage deviation from the optimal solution.
-The results indicate that the tabu search performs better with larger tabu list sizes, with a lower percentage deviation from the optimal solution on larger instances.
+
+The results indicate that the Tabu Search metaheuristic outperforms both heuristics on larger instances, with a lower percentage deviation from the optimal solution.
+\subsection{CPLEX Solver Performance Benchmark}
+Finally, we will take a look at the performance of the CPLEX solver on the same set of well known TSP instances. Here we list the results of the implementation of the branch and cut method using 
+the CPLEX solver, listing the final cost of the solution, the time taken to solve the problem, and the number of nodes explored by the solver.
+\begin{table}[!ht]
+	\centering
+	\begin{tabular}{|l|l|r|r|}
+	\hline
+	\textbf{Instance} & \textbf{Method} & \textbf{Cost} & \textbf{Time (s)} \\
+	\hline
+	a280\_1.tsp & CPLEX Branch and cut & 2586.770 & 20.564 \\
+	ali535\_1.tsp & CPLEX Branch and cut & 2009.447 & 313.754 \\
+	att48\_1.tsp & CPLEX Branch and cut & 33523.709 & 1.574 \\
+	att532\_1.tsp & CPLEX Branch and cut & 86742.422 & 559.105 \\
+	a280\_1.tsp & CPLEX Calback approach & 2586.770 & 17.049 \\
+	ali535\_1.tsp & CPLEX Calback approach & 2009.447 & 340.157 \\
+	att48\_1.tsp & CPLEX Calback approach & 33523.709 & 0.269 \\
+	att532\_1.tsp & CPLEX Calback approach & 86742.422 & 829.870 \\
+	a280\_1.tsp & CPLEX Branch and cut with Local Branching & 2586.770 & 15.555 \\
+	ali535\_1.tsp & CPLEX Branch and cut with Local Branching & 2009.447 & 528.347 \\
+	att48\_1.tsp & CPLEX Branch and cut with Local Branching & 33523.709 & 1.039 \\
+	att532\_1.tsp & CPLEX Branch and cut with Local Branching & 86742.422 & 1039.645 \\
+	a280\_1.tsp & CPLEX Callback approach with Hard fixing  & 2586.770 & 15.012 \\
+	ali535\_1.tsp & CPLEX Callback approach with Hard fixing  & 2009.447 & 418.219 \\
+	att48\_1.tsp & CPLEX Callback approach with Hard fixing  & 33523.709 & 0.337 \\
+	att532\_1.tsp & CPLEX Callback approach with Hard fixing  & 86742.422 & 1342.287 \\
+	\hline
+	\end{tabular}
+	\caption{CPLEX solver performance on well known TSP instances, showing the final cost of the solution, time taken to solve the problem, and number of nodes explored by the solver.}
+	\label{tab:cplex_performance}
+\end{table}
+
+The results indicate that the CPLEX solver is able to solve the TSP instances in a reasonable amount of time, with the callback approach and the branch and cut method with local branching
+showing the best performance on larger instances. The hard fixing approach also shows good performance,
+but it is slightly slower than the other two approaches. 
 \newpage
 
 
@@ -1435,13 +1485,6 @@ Mathheuristic Efficiency: The integration of mathematical programming with heuri
 
 Starting Solution Impact: Our experiments with different starting points revealed that while initialization can affect performance, robust metaheuristics can largely overcome poor starting solutions through their search mechanisms.
 
-\subparagraph{Limitations and Future Work}
-Despite the comprehensive nature of our implementations, several limitations and opportunities for future research remain:
-
-Real-world Applications: Testing these algorithms on real-world data with additional constraints would provide valuable insights into their practical applicability.
-
-Additional Mathheuristics: Exploring other mathheuristic approaches like Relaxation Induced Neighborhood Search (RINS) or solution polishing could further enhance solution quality.
-
 \subparagraph{Final Remarks}
 The TSP remains a fundamental problem in combinatorial optimization with wide-ranging applications. This work has demonstrated the practical effectiveness of 
 implementing various solution approaches in the C programming language with CPLEX integration. Our implementations show that while exact methods struggle with large instances, 
@@ -1451,6 +1494,13 @@ The complementary nature of the different approaches highlights the value of hav
 By understanding the strengths and limitations of each method, practitioners can select the most appropriate approach based on their specific problem characteristics and computational resources.
 
 \newpage
+
+\section{Appendix}
+\subsection{Implementation Details}
+The implementation of the algorithms described in this thesis is available on GitHub at the following link: \url{https://github.com/yfbenkhalifa/TSP-Optimization-solvers}.
+
+\newpage
+
 \bibliographystyle{alpha}
 \bibliography{sample}
 

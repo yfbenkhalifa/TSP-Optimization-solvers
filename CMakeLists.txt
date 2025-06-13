@@ -47,4 +47,13 @@ target_link_libraries(main or2_project_lib cplex m pthread dl)
 add_executable(benchmark src/benchmark.c)
 target_link_libraries(benchmark or2_project_lib cplex m pthread dl)
 
+add_executable(batch_run_tsp batch_run_tsp.c)
+
+# Custom target to run main on all .tsp files in data/ with cplex_callback_candidate
+add_custom_target(run_all_tsp
+    COMMAND bash -c 'for f in ${CMAKE_SOURCE_DIR}/data/tsp/*.tsp; do echo "Running on $f"; ${CMAKE_BINARY_DIR}/main -m cplex_callback_candidate --log ${CMAKE_BINARY_DIR}/logfile.log "$f"; done'
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Running main on all .tsp files in data/ with cplex_callback_candidate method"
+)
+
 add_subdirectory(tests)
